@@ -9,7 +9,8 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'ttsd'
 	displayName = 'HTTP TTS Server (Requires Running Server)'
 	interval = 100
-	settings = {	'voice':	None,
+	settings = {	'engine':	None,
+					'voice':	None,
 					'speed':	0,
 					'host':		'127.0.0.1',
 					'port':		8256,
@@ -20,6 +21,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		preferred = self.setting('player') or None
 		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=preferred)
 		base.SimpleTTSBackendBase.__init__(self,player)
+		self.engine = self.setting('engine')
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		self.setHTTPURL()
@@ -36,6 +38,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		
 	def runCommand(self,text,outFile):
 		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
+		if self.engine: postdata['engine'] = self.engine
 		if self.voice: postdata['voice'] = self.voice
 		if self.speed: postdata['rate'] = self.speed
 		req = urllib2.Request(self.httphost + 'speak.wav', urllib.urlencode(postdata))
@@ -51,6 +54,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		return True
 
 	def update(self):
+		self.engine = self.setting('engine')
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		self.setPlayer(self.setting('player'))
@@ -66,6 +70,10 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	def voices(self):
 		return urllib2.urlopen(self.httphost + 'voices',data='').read().splitlines()
 		
+	def settingList(self,setting):
+		if setting == 'engine':
+			return urllib2.urlopen(self.httphost + 'engines/wav',data='').read().splitlines()
+	
 	@staticmethod
 	def available():
 		return True

@@ -15,6 +15,14 @@ from sjhttsd import SJHttsdTTSBackend
 
 backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,SpeechDispatcherTTSBackend,FliteTTSBackend,ESpeakTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,OSXSayTTSBackend,SJHttsdTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
 
+def getAvailableBackends(can_stream_wav=False):
+	available = []
+	for b in backendsByPriority:
+		if not b._available(): continue
+		if can_stream_wav and not b.canStreamWav: continue
+		available.append[b]
+	return available
+			
 def getBackendFallback():
 	if util.isATV2():
 		return FliteTTSBackend 
@@ -35,18 +43,6 @@ def getVoices(provider):
 		b = bClass()
 		voices = b.voices()
 	return voices
-		
-def selectVoice(provider):
-	import xbmcgui
-	voices = getVoices(provider)
-	if not voices:
-		xbmcgui.Dialog().ok('Not Available','No voices to select.')
-		return
-	idx = xbmcgui.Dialog().select('Choose Voice',voices)
-	if idx < 0: return
-	voice = voices[idx]
-	util.LOG('Voice for {0} set to: {1}'.format(provider,voice))
-	util.setSetting('voice.{0}'.format(provider),voice)
 	
 def getLanguages(provider):
 	languages = None
@@ -55,37 +51,22 @@ def getLanguages(provider):
 		b = bClass()
 		languages = b.languages()
 	return languages
-
-def selectLanguage(provider):
-	import xbmcgui
-	languages = getLanguages(provider)
-	if not languages:
-		xbmcgui.Dialog().ok('Not Available','No languages to select.')
-		return
-	idx = xbmcgui.Dialog().select('Choose Language',languages)
-	if idx < 0: return
-	language = languages[idx]
-	util.LOG('Language for {0} set to: {1}'.format(provider,language))
-	util.setSetting('language.{0}'.format(provider),language)
 	
-def selectPlayer(provider):
-	import xbmcgui
+def getSettingsList(provider,setting):
+	settings = None
+	bClass = getBackendByProvider(provider)
+	if bClass:
+		b = bClass()
+		settings = b.settingList(setting)
+	return settings
+
+def getPlayers(provider):
 	players = None
 	bClass = getBackendByProvider(provider)
 	if bClass and hasattr(bClass,'players'):
 		b = bClass()
 		players = b.players()
-	if not players:
-		xbmcgui.Dialog().ok('Not Available','No players to select.')
-		return
-	players.insert(0,('','Auto'))
-	disp = []
-	for p in players: disp.append(p[1])
-	idx = xbmcgui.Dialog().select('Choose Player',disp)
-	if idx < 0: return
-	player = players[idx][0]
-	util.LOG('Player for {0} set to: {1}'.format(b.provider,player))
-	util.setSetting('player.{0}'.format(b.provider),player)
+	return players
 		
 def getBackend(provider='auto'):
 	provider = util.getSetting('backend') or provider

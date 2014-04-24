@@ -54,6 +54,13 @@ class TTSBackendBase:
 		"""
 		return None
 
+	def settingList(self,setting):
+		"""Returns a list of options for a setting
+		
+		May be overridden by subclasses. Default implementation returns None.
+		"""
+		return None
+		
 	def setting(self,setting):
 		"""Returns a backend setting, or default if not set
 		"""
