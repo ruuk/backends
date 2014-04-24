@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import time, threading, Queue
+import time, threading, Queue, os
 from lib import util
 import audio
 
@@ -83,6 +83,8 @@ class TTSBackendBase:
 		"""
 		return None
 
+	def getWavStream(self,text): return None
+	
 	def update(self):
 		"""Called when the user has changed a setting for this backend
 		
@@ -227,6 +229,7 @@ class ThreadedTTSBackend(TTSBackendBase):
 class SimpleTTSBackendBase(ThreadedTTSBackend):
 	WAVOUT = 0
 	ENGINESPEAK = 1
+	canStreamWav = True
 	"""Handles speech engines that output wav files
 
 	Subclasses must at least implement the runCommand() method which should
@@ -270,6 +273,11 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 		"""
 		raise Exception('Not Implemented')
 	
+	def getWavStream(self,text):
+		fpath = os.path.join(util.getTmpfs(),'speech.wav')
+		self.runCommand(text,fpath)
+		return open(fpath,'rb')
+		
 	def threadedSay(self,text):
 		if not text: return
 		if self.mode == self.WAVOUT:
