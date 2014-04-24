@@ -20,7 +20,7 @@ def getAvailableBackends(can_stream_wav=False):
 	for b in backendsByPriority:
 		if not b._available(): continue
 		if can_stream_wav and not b.canStreamWav: continue
-		available.append[b]
+		available.append(b)
 	return available
 			
 def getBackendFallback():
