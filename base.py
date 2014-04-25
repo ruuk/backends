@@ -281,7 +281,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def threadedSay(self,text):
 		if not text: return
 		if self.mode == self.WAVOUT:
-			outFile = self.player.getOutFile()
+			outFile = self.player.getOutFile(text)
 			if not self.runCommand(text,outFile): return
 			self.player.play()
 		else:

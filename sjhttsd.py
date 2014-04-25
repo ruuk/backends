@@ -68,11 +68,22 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			pass
 
 	def voices(self):
-		return urllib2.urlopen(self.httphost + 'voices',data='').read().splitlines()
+		try:
+			return urllib2.urlopen(self.httphost + 'voices').read().splitlines()
+		except urllib2.HTTPError:
+			return None
 		
 	def settingList(self,setting):
 		if setting == 'engine':
-			return urllib2.urlopen(self.httphost + 'engines/wav',data='').read().splitlines()
+			try:
+				engines = urllib2.urlopen(self.httphost + 'engines/wav',data='').read().splitlines()
+			except urllib2.HTTPError:
+				return None
+			ret = []
+			for e in engines:
+				ret.append(e.split('.',1))
+			return ret
+		return None
 	
 	@staticmethod
 	def available():

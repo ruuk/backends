@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, subprocess, wave, time, threading
+import os, subprocess, wave, hashlib, threading
 
 from lib import util
 
@@ -20,7 +20,7 @@ except:
 class PlayerHandler:
 	def setSpeed(self,speed): pass
 	def player(self): return None
-	def getOutFile(self): raise Exception('Not Implemented')
+	def getOutFile(self,text): raise Exception('Not Implemented')
 	def play(self): raise Exception('Not Implemented')
 	def isPlaying(self): raise Exception('Not Implemented')
 	def stop(self): raise Exception('Not Implemented')
@@ -53,15 +53,15 @@ class PlaySFXHandler(PlayerHandler):
 	def hasStopSFX():
 		return PlaySFXHandler._xbmcHasStopSFX
 		
-	def _nextOutFile(self):
+	def _nextOutFile(self,text):
 		if not PLAYSFX_HAS_USECACHED:
-			self.outFile = self.outFileBase % time.time()
+			self.outFile = self.outFileBase % hashlib.md5(text).hexdigest()
 		return self.outFile
 		
 	def player(self): return 'playSFX'
 	
-	def getOutFile(self):
-		return self._nextOutFile()
+	def getOutFile(self,text):
+		return self._nextOutFile(text)
 
 	def play(self):
 		if not os.path.exists(self.outFile):
@@ -211,7 +211,7 @@ class ExternalPlayerHandler(PlayerHandler):
 	def _deleteOutFile(self):
 		if os.path.exists(self.outFile): os.remove(self.outFile)
 		
-	def getOutFile(self):
+	def getOutFile(self,text):
 		return self.outFile
 		
 	def setSpeed(self,speed):
@@ -304,8 +304,8 @@ class WavPlayer:
 	def setSpeed(self,speed):
 		return self.handler.setSpeed(speed)
 		
-	def getOutFile(self):
-		return self.handler.getOutFile()
+	def getOutFile(self,text):
+		return self.handler.getOutFile(text)
 			
 	def play(self):
 		return self.handler.play()

@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-import sys
+import sys, wave, StringIO
 from base import ThreadedTTSBackend
 
 class SAPITTSBackend(ThreadedTTSBackend):
 	provider = 'SAPI'
 	displayName = 'SAPI (Windows Internal)'
 	settings = {'voice':''}
+	canStreamWav = True
 	interval = 100
 	def __init__(self):
 		import comtypes.client
+		self.comtypesClient = comtypes.client
 		self.SpVoice = comtypes.client.CreateObject("SAPI.SpVoice")
 		self.update()
 		self.threadedInit()
@@ -16,6 +18,27 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	def threadedSay(self,text):
 		if not self.SpVoice: return
 		self.SpVoice.Speak(text,1)
+
+	def getWavStream(self,text):
+		format_ = self.comtypesClient.CreateObject("SAPI.SpAudioFormat")
+		format_.type = 22
+		stream = self.comtypesClient.CreateObject("SAPI.SpMemoryStream")
+		self.SpVoice.AudioOutputStream = stream
+		self.SpVoice.Speak(text,1)
+		self.SpVoice.WaitUntilDone(-1)
+		wavIO = StringIO.StringIO()
+		wavFileObj = wave.open(wavIO,'wb')
+		wavFileObj.setframerate(22050)
+		wavFileObj.setsampwidth(2)
+		wavFileObj.setnchannels(1)
+		wavFileObj.writeframes(stream.getData())
+		wavFileObj.close()
+		return wavIO
+#		my $len = length($contents);
+#	    my $samplerate = 22050;
+#	    my $bits = 16;
+#	    my $mode = 1;
+#	    my $channels = 1;
 
 	def stop(self):
 		if not self.SpVoice: return
