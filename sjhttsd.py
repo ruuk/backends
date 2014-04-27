@@ -14,7 +14,8 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 					'speed':	0,
 					'host':		'127.0.0.1',
 					'port':		8256,
-					'player':	None
+					'player':	None,
+					'perl_server': True
 	}
 
 	def __init__(self):
@@ -24,6 +25,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		self.engine = self.setting('engine')
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
+		self.perlServer = self.setting('perl_server')
 		self.setHTTPURL()
 		self.process = None
 		self.failFlag = False
@@ -38,9 +40,13 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		
 	def runCommand(self,text,outFile):
 		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
-		if self.engine: postdata['engine'] = self.engine
-		if self.voice: postdata['voice'] = self.voice
-		if self.speed: postdata['rate'] = self.speed
+		if self.perlServer:
+			postdata['voice'] = self.voice
+			postdata['rate'] = self.speed
+		else:
+			if self.engine: postdata['engine'] = self.engine
+			if self.voice: postdata['voice'] = self.voice
+			if self.speed: postdata['rate'] = self.speed
 		req = urllib2.Request(self.httphost + 'speak.wav', urllib.urlencode(postdata))
 		with open(outFile, "w") as wav:
 			try:
@@ -58,6 +64,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		self.setPlayer(self.setting('player'))
+		self.perlServer = self.setting('perl_server')
 		self.setHTTPURL()
 
 	def stop(self):
