@@ -12,8 +12,9 @@ from espeak import ESpeakTTSBackend, ESpeakCtypesTTSBackend
 from speechdispatcher import SpeechDispatcherTTSBackend
 from jaws import JAWSTTSBackend
 from sjhttsd import SJHttsdTTSBackend
+from cepstral import CepstralTTSBackend
 
-backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,SpeechDispatcherTTSBackend,FliteTTSBackend,ESpeakTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,OSXSayTTSBackend,SJHttsdTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
+backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,CepstralTTSBackend,SpeechDispatcherTTSBackend,FliteTTSBackend,ESpeakTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,OSXSayTTSBackend,SJHttsdTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
 
 def getAvailableBackends(can_stream_wav=False):
 	available = []

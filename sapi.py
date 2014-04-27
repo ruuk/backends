@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys, wave, StringIO
+import sys, wave, array, StringIO
 from base import ThreadedTTSBackend
 
 class SAPITTSBackend(ThreadedTTSBackend):
@@ -19,26 +19,59 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		if not self.SpVoice: return
 		self.SpVoice.Speak(text,1)
 
+#	def getWavStream(self,text):
+#		#Have SAPI write to file
+#		stream = self.comtypesClient.CreateObject("SAPI.SpFileStream")
+#		fpath = os.path.join(util.getTmpfs(),'speech.wav')
+#		open(fpath,'w').close()
+#		stream.Open(fpath,3)
+#		self.SpVoice.AudioOutputStream = stream
+#		self.SpVoice.Speak(text,0)
+#		stream.close()
+#		return open(fpath,'rb')
+		
 	def getWavStream(self,text):
-		format_ = self.comtypesClient.CreateObject("SAPI.SpAudioFormat")
-		format_.type = 22
+		fmt = self.comtypesClient.CreateObject("SAPI.SpAudioFormat")
+		fmt.Type = 22
+		
 		stream = self.comtypesClient.CreateObject("SAPI.SpMemoryStream")
+		stream.Format = fmt
 		self.SpVoice.AudioOutputStream = stream
-		self.SpVoice.Speak(text,1)
-		self.SpVoice.WaitUntilDone(-1)
+		
+		self.SpVoice.Speak(text,0)
+		
 		wavIO = StringIO.StringIO()
-		wavFileObj = wave.open(wavIO,'wb')
-		wavFileObj.setframerate(22050)
-		wavFileObj.setsampwidth(2)
-		wavFileObj.setnchannels(1)
-		wavFileObj.writeframes(stream.getData())
-		wavFileObj.close()
+		self.createWavFileObject(wavIO,stream)
 		return wavIO
-#		my $len = length($contents);
-#	    my $samplerate = 22050;
-#	    my $bits = 16;
-#	    my $mode = 1;
-#	    my $channels = 1;
+	
+	def createWavFileObject(self,wavIO,stream):
+		#Write wave via the wave module
+		wavFileObj = wave.open(wavIO,'wb')
+		wavFileObj.setparams((1, 2, 22050, 0, 'NONE', 'not compressed'))
+		wavFileObj.writeframes(array.array('B',stream.GetData()).tostring())
+		wavFileObj.close()
+	
+#	def createWavFileObject(self,wavIO,stream):
+#		#Write wave headers manually
+#		import struct
+#		data = array.array('B',stream.GetData()).tostring()
+#		dlen = len(data)
+#		header = struct.pack(		'4sl8slhhllhh4sl',
+#											'RIFF',
+#											dlen+36,
+#											'WAVEfmt ',
+#											16, #Bits
+#											1, #Mode
+#											1, #Channels
+#											22050, #Samplerate
+#											22050*16/8, #Samplerate*Bits/8
+#											1*16/8, #Channels*Bits/8
+#											16,
+#											'data',
+#											dlen
+#		)
+#		wavIO.write(header)
+#		wavIO.write(data)
 
 	def stop(self):
 		if not self.SpVoice: return
