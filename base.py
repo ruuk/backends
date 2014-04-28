@@ -83,7 +83,13 @@ class TTSBackendBase:
 		"""
 		return None
 
-	def getWavStream(self,text): return None
+	def getWavStream(self,text):
+		"""Returns an open file like object containing wav data
+		
+		Subclasses should override this to provide access to functions
+		that require this functionality
+		"""
+		return None
 	
 	def update(self):
 		"""Called when the user has changed a setting for this backend
@@ -256,7 +262,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def setSpeed(self,speed):
 		self.player.setSpeed(speed)
 		
-	def runCommand(text,outFile):
+	def runCommand(self,text,outFile):
 		"""Convert text to speech and output to a .wav file
 		
 		If using WAVOUT mode, subclasses must override this method

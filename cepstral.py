@@ -14,6 +14,11 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 	
 	def __init__(self):
 		base.SimpleTTSBackendBase.__init__(self,mode=base.SimpleTTSBackendBase.ENGINESPEAK)
+		if hasattr(subprocess,'STARTUPINFO'): #Windows
+			self.startupinfo = subprocess.STARTUPINFO()
+			self.startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW #Suppress terminal window
+		else:
+			self.startupinfo = None
 		self.voice = self.setting('voice')
 		self.process = None
 
@@ -21,7 +26,7 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 		args = ['swift']
 		if self.voice: args.extend(('-n',self.voice))
 		args.append(text)
-		self.process = subprocess.Popen(args)
+		self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		while self.process.poll() == None and self.active: util.sleep(10)	
 
 	def update(self):

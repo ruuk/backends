@@ -94,7 +94,8 @@ class PlaySFXHandler(PlayerHandler):
 	def close(self):
 		for f in os.listdir(self.outDir):
 			if f.startswith('.'): continue
-			os.remove(os.path.join(self.outDir,f))
+			fpath = os.path.join(self.outDir,f)
+			if os.path.exists(fpath): os.remove(fpath)
 
 class CommandInfo:
 	_advanced = False

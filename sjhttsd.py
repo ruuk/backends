@@ -15,18 +15,15 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 					'host':		'127.0.0.1',
 					'port':		8256,
 					'player':	None,
-					'perl_server': True
+					'perl_server': True,
+					'speak_on_server': False
 	}
 
 	def __init__(self):
 		preferred = self.setting('player') or None
 		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=preferred)
 		base.SimpleTTSBackendBase.__init__(self,player)
-		self.engine = self.setting('engine')
-		self.voice = self.setting('voice')
-		self.speed = self.setting('speed')
-		self.perlServer = self.setting('perl_server')
-		self.setHTTPURL()
+		self.baseUpdate()
 		self.process = None
 		self.failFlag = False
 
@@ -43,11 +40,12 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		if self.perlServer:
 			postdata['voice'] = self.voice
 			postdata['rate'] = self.speed
+			req = urllib2.Request(self.httphost + 'speak.wav', urllib.urlencode(postdata))
 		else:
 			if self.engine: postdata['engine'] = self.engine
 			if self.voice: postdata['voice'] = self.voice
 			if self.speed: postdata['rate'] = self.speed
-		req = urllib2.Request(self.httphost + 'speak.wav', urllib.urlencode(postdata))
+			req = urllib2.Request(self.httphost + self.serverMethod, urllib.urlencode(postdata))
 		with open(outFile, "w") as wav:
 			try:
 				shutil.copyfileobj(urllib2.urlopen(req),wav)
@@ -59,13 +57,19 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 				return False
 		return True
 
-	def update(self):
+	def baseUpdate(self):
 		self.engine = self.setting('engine')
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
-		self.setPlayer(self.setting('player'))
 		self.perlServer = self.setting('perl_server')
+		self.speakOnServer = self.setting('speak_on_server')
+		self.serverMethod = self.speakOnServer and 'say' or 'wav'
 		self.setHTTPURL()
+		
+	def update(self):
+		self.baseUpdate()
+		self.setPlayer(self.setting('player'))
+		
 
 	def stop(self):
 		if not self.process: return
