@@ -249,7 +249,7 @@ class ExternalPlayerHandler(PlayerHandler):
 		players = []
 		for p in cls.players:
 			try:
-				subprocess.call(p.available)
+				subprocess.call(p.available, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 				players.append(p)
 			except:
 				pass
