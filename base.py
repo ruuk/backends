@@ -243,6 +243,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	must play the speech directly.
 	"""
 	def __init__(self,player=None,mode=WAVOUT):
+		self.mode = None
 		self._simpleIsSpeaking = False
 		self.setMode(mode)
 		self.player = player or audio.WavPlayer()
@@ -250,6 +251,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 
 	def setMode(self,mode):
 		assert isinstance(mode,int), 'Bad mode'
+		if mode == self.mode: return
 		self.mode = mode
 		if mode == self.WAVOUT:
 			util.LOG('Mode: WAVOUT')

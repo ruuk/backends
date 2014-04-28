@@ -22,7 +22,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	def __init__(self):
 		preferred = self.setting('player') or None
 		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=preferred)
-		base.SimpleTTSBackendBase.__init__(self,player)
+		base.SimpleTTSBackendBase.__init__(self,player,mode=self.getMode())
 		self.baseUpdate()
 		self.process = None
 		self.failFlag = False
@@ -45,7 +45,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			if self.engine: postdata['engine'] = self.engine
 			if self.voice: postdata['voice'] = self.voice
 			if self.speed: postdata['rate'] = self.speed
-			req = urllib2.Request(self.httphost + self.serverMethod, urllib.urlencode(postdata))
+			req = urllib2.Request(self.httphost + 'wav', urllib.urlencode(postdata))
 		with open(outFile, "w") as wav:
 			try:
 				shutil.copyfileobj(urllib2.urlopen(req),wav)
@@ -57,21 +57,50 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 				return False
 		return True
 
+	def runCommandAndSpeak(self,text):
+		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
+		if self.engine: postdata['engine'] = self.engine
+		if self.voice: postdata['voice'] = self.voice
+		if self.speed: postdata['rate'] = self.speed
+		req = urllib2.Request(self.httphost + 'say', urllib.urlencode(postdata))
+		try:
+			urllib2.urlopen(req)
+			self.failFlag = False
+		except:
+			util.ERROR('SJHttsdTTSBackend: say',hide_tb=True)
+			if self.failFlag: self.dead = True #This is the second fail in a row, mark dead
+			self.failFlag = True
+			return False
+	
+	def getMode(self):
+		if self.setting('speak_on_server'):
+			self.serverMode = True
+			return base.SimpleTTSBackendBase.ENGINESPEAK
+		else:
+			self.serverMode = False
+			return base.SimpleTTSBackendBase.WAVOUT
+			
 	def baseUpdate(self):
 		self.engine = self.setting('engine')
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		self.perlServer = self.setting('perl_server')
-		self.speakOnServer = self.setting('speak_on_server')
-		self.serverMethod = self.speakOnServer and 'say' or 'wav'
 		self.setHTTPURL()
 		
 	def update(self):
 		self.baseUpdate()
 		self.setPlayer(self.setting('player'))
+		self.setMode(self.getMode())
 		
+	def serverStop(self):
+		req = urllib2.Request(self.httphost + 'stop', '')
+		try:
+			urllib2.urlopen(req)
+		except:
+			util.ERROR('SJHttsdTTSBackend: stop',hide_tb=True)
 
 	def stop(self):
+		if self.serverMode: self.serverStop()
 		if not self.process: return
 		try:
 			self.process.terminate()
