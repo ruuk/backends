@@ -15,7 +15,7 @@ from sjhttsd import SJHttsdTTSBackend
 from cepstral import CepstralTTSBackend
 from google import GoogleTTSBackend
 
-backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,CepstralTTSBackend,SpeechDispatcherTTSBackend,FliteTTSBackend,ESpeakTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,OSXSayTTSBackend,SJHttsdTTSBackend,GoogleTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
+backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,SpeechDispatcherTTSBackend,FliteTTSBackend,ESpeakTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,CepstralTTSBackend,OSXSayTTSBackend,SJHttsdTTSBackend,GoogleTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
 
 def getAvailableBackends(can_stream_wav=False):
 	available = []
