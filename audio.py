@@ -219,7 +219,7 @@ class ExternalPlayerHandler(PlayerHandler):
 		self.speed = speed
 		
 	def play(self):
-		self._wavProcess = subprocess.Popen(self._player.playArgs(self.outFile,self.speed))
+		self._wavProcess = subprocess.Popen(self._player.playArgs(self.outFile,self.speed),stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		
 		while self._wavProcess.poll() == None and self.active: util.sleep(10)
 		
