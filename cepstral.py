@@ -25,7 +25,7 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 
 	def runCommandAndSpeak(self,text):
 		args = ['swift']
-		if self.useAOSS: args.insert('aoss')
+		if self.useAOSS: args.insert(0,'aoss')
 		if self.voice: args.extend(('-n',self.voice))
 		args.append(text)
 		self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)

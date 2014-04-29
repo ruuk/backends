@@ -30,4 +30,4 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 			
 	@staticmethod
 	def available():
-		return True
+		return util.commandIsAvailable('mplayer')
