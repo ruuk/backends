@@ -7,6 +7,9 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'pico2wave'
 	displayName = 'pico2wave'
 	interval = 100
+	speedMin = 20
+	speedMax = 200
+	speedMid = 100
 	settings = {	'language':'',
 					'speed':0,
 					'use_sox':False

@@ -5,7 +5,10 @@ from base import ThreadedTTSBackend
 class SAPITTSBackend(ThreadedTTSBackend):
 	provider = 'SAPI'
 	displayName = 'SAPI (Windows Internal)'
-	settings = {'voice':''}
+	settings = {	'voice':'',
+					'speed':0
+	
+	}
 	canStreamWav = True
 	interval = 100
 	speedMin = -10
@@ -95,6 +98,8 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		return ThreadedTTSBackend.isSpeaking(self) or None
 		
 	def update(self):
+		self.speed = self.setting('speed')
+		self.SpVoice.Rate = self.speed
 		voice_name = self.setting('voice')
 		if voice_name:
 			v=self.SpVoice.getVoices()
@@ -105,7 +110,7 @@ class SAPITTSBackend(ThreadedTTSBackend):
 			else:
 				# Voice not found.
 				return
-			self.SpVoice.voice = voice
+			self.SpVoice.Voice = voice
 		
 	def close(self):
 		del self.SpVoice
