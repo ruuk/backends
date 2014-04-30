@@ -47,7 +47,8 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		else:
 			if self.engine: postdata['engine'] = self.engine
 			if self.voice: postdata['voice'] = self.voice
-			if self.speed: postdata['rate'] = self.speed
+			if self.speed is not None: postdata['rate'] = self.speed
+			print postdata
 			req = urllib2.Request(self.httphost + 'wav', urllib.urlencode(postdata))
 		with open(outFile, "w") as wav:
 			try:
@@ -86,10 +87,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	def baseUpdate(self):
 		self.engine = self.setting('engine')
 		voice = self.setting('voice.{0}'.format(self.engine))
-		print 'voice.{0}'.format(self.engine)
-		print voice
 		if voice: voice = '{0}.{1}'.format(self.engine,voice)
-		print voice
 		self.voice = voice
 		self.speed = self.setting('speed')
 		self.perlServer = self.setting('perl_server')

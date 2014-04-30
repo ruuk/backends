@@ -79,6 +79,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 	interval = 100
 	speedMin = 80
 	speedMax = 450
+	speedMid = 175
 	settings = {	'voice':'',
 					'speed':0,
 					'output_via_espeak':False,

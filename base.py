@@ -18,16 +18,25 @@ class TTSBackendBase:
 	broken = False
 	speedMin = 0
 	speedMax = 0
+	speedMid = 0
 	speedInt = True
 	dead = False #Backend should flag this true if it's no longer usable
 
-	def scaleSpeed(self,smin,smax,target):
-		if not self.speedMax: return
-		target += (0 - smin)
-		adj = smax + (0 - smin)
-		selfadj = self.speedMax + (0 - self.speedMin)
-		new = (target/float(adj)) * selfadj
-		new += self.speedMin
+	def scaleSpeed(self,target): #Target is between -20 and 20
+		if not self.speedMax: return target
+		if target < 0:
+			adj = self.speedMid - self.speedMin
+			scale = (20 - target) / 20.0
+			new = scale * adj
+			new += self.speedMin
+		elif target > 0:
+			adj = self.speedMax - self.speedMid
+			scale = target/20.0
+			new = scale * adj
+			new += self.speedMid
+		else:
+			new = self.speedMid
+	
 		if self.speedInt: return int(new)
 		return new
 	

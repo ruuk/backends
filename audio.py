@@ -267,6 +267,7 @@ class WavPlayer:
 		self.setPlayer(preferred)
 		
 	def initPlayer(self):
+		if self.handler: return
 		if not self.usePlaySFX():
 			util.LOG('stopSFX not available')
 			self.useExternalPlayer()
@@ -289,6 +290,7 @@ class WavPlayer:
 			util.LOG('No external player - falling back to playSFX()')
 		
 	def setPlayer(self,preferred=None):
+		if self.handler and preferred == self.preferred: return
 		self.preferred = preferred
 		if self.handler and preferred == self.handler.player(): return 
 		if preferred and self.externalHandler:
