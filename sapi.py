@@ -8,6 +8,9 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	settings = {'voice':''}
 	canStreamWav = True
 	interval = 100
+	speedMin = -10
+	speedMax = 10
+	speedMid = 0
 	def __init__(self):
 		import comtypes.client
 		self.comtypesClient = comtypes.client
