@@ -64,7 +64,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
 		if self.engine: postdata['engine'] = self.engine
 		if self.voice: postdata['voice'] = self.voice
-		if self.speed: postdata['rate'] = self.speed
+		if self.speed is not None: postdata['rate'] = self.speed
 		req = urllib2.Request(self.httphost + 'say', urllib.urlencode(postdata))
 		try:
 			urllib2.urlopen(req)

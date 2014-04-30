@@ -27,6 +27,7 @@ class TTSBackendBase:
 		adj = smax + (0 - smin)
 		selfadj = self.speedMax + (0 - self.speedMin)
 		new = (target/float(adj)) * selfadj
+		new += self.speedMin
 		if self.speedInt: return int(new)
 		return new
 	
