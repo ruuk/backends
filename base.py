@@ -16,8 +16,20 @@ class TTSBackendBase:
 	canStreamWav = False
 	interval = 400
 	broken = False
+	speedMin = 0
+	speedMax = 0
+	speedInt = True
 	dead = False #Backend should flag this true if it's no longer usable
 
+	def scaleSpeed(self,smin,smax,target):
+		if not self.speedMax: return
+		target += (0 - smin)
+		adj = smax + (0 - smin)
+		selfadj = self.speedMax + (0 - self.speedMin)
+		new = (target/float(adj)) * selfadj
+		if self.speedInt: return int(new)
+		return new
+	
 	def say(self,text,interrupt=False):
 		"""Method accepting text to be spoken
 		
@@ -54,7 +66,7 @@ class TTSBackendBase:
 		"""
 		return None
 
-	def settingList(self,setting):
+	def settingList(self,setting,*args):
 		"""Returns a list of options for a setting
 		
 		May be overridden by subclasses. Default implementation returns None.

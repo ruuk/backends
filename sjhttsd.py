@@ -10,7 +10,10 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	displayName = 'HTTP TTS Server (Requires Running Server)'
 	interval = 100
 	settings = {	'engine':	None,
-					'voice':	None,
+					'voice.Flite':	None,
+					'voice.eSpeak':	None,
+					'voice.SAPI':	None,
+					'voice.Cepstral':	None,
 					'speed':	0,
 					'host':		'127.0.0.1',
 					'port':		8256,
@@ -82,7 +85,12 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			
 	def baseUpdate(self):
 		self.engine = self.setting('engine')
-		self.voice = self.setting('voice')
+		voice = self.setting('voice.{0}'.format(self.engine))
+		print 'voice.{0}'.format(self.engine)
+		print voice
+		if voice: voice = '{0}.{1}'.format(self.engine,voice)
+		print voice
+		self.voice = voice
 		self.speed = self.setting('speed')
 		self.perlServer = self.setting('perl_server')
 		self.setHTTPURL()
@@ -107,13 +115,14 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		except:
 			pass
 
-	def voices(self):
+	def voices(self,engine=None):
+		if engine: engine = '?engine={0}'.format(engine)
 		try:
-			return urllib2.urlopen(self.httphost + 'voices').read().splitlines()
+			return urllib2.urlopen(self.httphost + 'voices{0}'.format(engine)).read().splitlines()
 		except urllib2.HTTPError:
 			return None
 		
-	def settingList(self,setting):
+	def settingList(self,setting,*args):
 		if setting == 'engine':
 			try:
 				engines = urllib2.urlopen(self.httphost + 'engines/wav',data='').read().splitlines()
@@ -122,6 +131,12 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			ret = []
 			for e in engines:
 				ret.append(e.split('.',1))
+			return ret
+		elif setting.startswith('voice.'):
+			ret = []
+			for v in self.voices(args[0]):
+				v = v.split('.')[-1]
+				ret.append((v,v))
 			return ret
 		return None
 	

@@ -77,6 +77,8 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'eSpeak'
 	displayName = 'eSpeak'
 	interval = 100
+	speedMin = 80
+	speedMax = 450
 	settings = {	'voice':'',
 					'speed':0,
 					'output_via_espeak':False,
@@ -138,7 +140,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 	@staticmethod
 	def available():
 		try:
-			subprocess.call(['espeak','--version'])
+			subprocess.call(['espeak','--version'], stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		except:
 			return False
 		return True

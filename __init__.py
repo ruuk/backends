@@ -54,12 +54,12 @@ def getLanguages(provider):
 		languages = b.languages()
 	return languages
 	
-def getSettingsList(provider,setting):
+def getSettingsList(provider,setting,*args):
 	settings = None
 	bClass = getBackendByProvider(provider)
 	if bClass:
 		b = bClass()
-		settings = b.settingList(setting)
+		settings = b.settingList(setting,*args)
 	return settings
 
 def getPlayers(provider):
