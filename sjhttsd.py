@@ -48,7 +48,6 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			if self.engine: postdata['engine'] = self.engine
 			if self.voice: postdata['voice'] = self.voice
 			if self.speed is not None: postdata['rate'] = self.speed
-			print postdata
 			req = urllib2.Request(self.httphost + 'wav', urllib.urlencode(postdata))
 		with open(outFile, "w") as wav:
 			try:
