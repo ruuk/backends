@@ -271,6 +271,12 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 		self.player = player or audio.WavPlayer()
 		self.threadedInit()
 
+	def __enter__(self):
+		return self
+		
+	def __exit__(self,exc_type,exc_value,traceback):
+		self._close()
+	
 	def setMode(self,mode):
 		assert isinstance(mode,int), 'Bad mode'
 		if mode == self.mode: return
