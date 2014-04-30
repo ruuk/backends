@@ -22,6 +22,12 @@ class TTSBackendBase:
 	speedInt = True
 	dead = False #Backend should flag this true if it's no longer usable
 
+	def __enter__(self):
+		return self
+		
+	def __exit__(self,exc_type,exc_value,traceback):
+		self._close()
+		
 	def scaleSpeed(self,target): #Target is between -20 and 20
 		if not self.speedMax: return target
 		if target < 0:
@@ -270,12 +276,6 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 		self.setMode(mode)
 		self.player = player or audio.WavPlayer()
 		self.threadedInit()
-
-	def __enter__(self):
-		return self
-		
-	def __exit__(self,exc_type,exc_value,traceback):
-		self._close()
 	
 	def setMode(self,mode):
 		assert isinstance(mode,int), 'Bad mode'
