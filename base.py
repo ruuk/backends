@@ -26,7 +26,7 @@ class TTSBackendBase:
 		if not self.speedMax: return target
 		if target < 0:
 			adj = self.speedMid - self.speedMin
-			scale = (20 - target) / 20.0
+			scale = (20 + target) / 20.0
 			new = scale * adj
 			new += self.speedMin
 		elif target > 0:
