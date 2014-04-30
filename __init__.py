@@ -42,28 +42,28 @@ def getVoices(provider):
 	voices = None
 	bClass = getBackendByProvider(provider)
 	if bClass:
-		with bClass as b: voices = b.voices()
+		with bClass() as b: voices = b.voices()
 	return voices
 	
 def getLanguages(provider):
 	languages = None
 	bClass = getBackendByProvider(provider)
 	if bClass:
-		with bClass as b: languages = b.languages()
+		with bClass() as b: languages = b.languages()
 	return languages
 	
 def getSettingsList(provider,setting,*args):
 	settings = None
 	bClass = getBackendByProvider(provider)
 	if bClass:
-		with bClass as b: settings = b.settingList(setting,*args)
+		with bClass() as b: settings = b.settingList(setting,*args)
 	return settings
 
 def getPlayers(provider):
 	players = None
 	bClass = getBackendByProvider(provider)
 	if bClass and hasattr(bClass,'players'):
-		with bClass as b: players = b.players()
+		with bClass() as b: players = b.players()
 	return players
 		
 def getBackend(provider='auto'):
