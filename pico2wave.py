@@ -12,16 +12,14 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 	speedMid = 100
 	settings = {	'language':'',
 					'speed':0,
-					'use_sox':False
+					'player',None
 	}
 
 	def __init__(self):
-		preferred = None
+		preferred = self.setting('player') or None
 		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred,True)
 		base.SimpleTTSBackendBase.__init__(self,player)
-
-		self.language = self.setting('language')
-		self.setSpeed(self.setting('speed'))
+		self.update()
 		
 	def runCommand(self,text,outFile):
 		args = ['pico2wave']
