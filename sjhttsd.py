@@ -10,6 +10,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	displayName = 'HTTP TTS Server (Requires Running Server)'
 	interval = 100
 	settings = {	'engine':	None,
+					'voice':	None,
 					'voice.Flite':	None,
 					'voice.eSpeak':	None,
 					'voice.SAPI':	None,
@@ -51,7 +52,9 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			req = urllib2.Request(self.httphost + 'wav', urllib.urlencode(postdata))
 		with open(outFile, "w") as wav:
 			try:
-				shutil.copyfileobj(urllib2.urlopen(req),wav)
+				res = urllib2.urlopen(req)
+				if not res.info().get('Content-Type') == 'audio/x-wav': return False #If not a wav we will crash XBMC
+				shutil.copyfileobj(res,wav)
 				self.failFlag = False
 			except:
 				util.ERROR('SJHttsdTTSBackend: wav.write',hide_tb=True)
@@ -84,16 +87,38 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			return base.SimpleTTSBackendBase.WAVOUT
 			
 	def baseUpdate(self):
-		self.engine = self.setting('engine')
-		voice = self.setting('voice.{0}'.format(self.engine))
-		if voice: voice = '{0}.{1}'.format(self.engine,voice)
-		self.voice = voice
-		self.speed = self.setting('speed')
-		self.perlServer = self.setting('perl_server')
 		self.setHTTPURL()
+		self.perlServer = self.setting('perl_server') #Not really currently used
+		version = self.getVersion()
+		if version.startswith('speech.server'):
+			if self.perlServer:
+				util.LOG('Perl server not detected. Switch to speech.server mode.')
+				self.perlServer = False
+		else:
+			if not self.perlServer:
+				util.LOG('speech.server not detected. Switch to Perl server mode.')
+				self.perlServer = True
+				
+		if self.perlServer:
+			self.voice = self.setting('voice')
+		else:
+			self.engine = self.setting('engine')
+			voice = self.setting('voice.{0}'.format(self.engine))
+			if voice: voice = '{0}.{1}'.format(self.engine,voice)
+			self.voice = voice
+		self.speed = self.setting('speed')
 		
+	def getVersion(self):
+		req = urllib2.Request(self.httphost + 'version')
+		try:
+			resp = urllib2.urlopen(req)
+			return resp.read()
+		except:
+			return ''
+
 	def update(self):
 		self.baseUpdate()
+		
 		self.setPlayer(self.setting('player'))
 		self.setMode(self.getMode())
 		
@@ -112,13 +137,17 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		except:
 			pass
 
-	def voices(self,engine=None):
+	def voices(self,engine=''):
 		if engine: engine = '?engine={0}'.format(engine)
 		try:
 			return urllib2.urlopen(self.httphost + 'voices{0}'.format(engine)).read().splitlines()
 		except urllib2.HTTPError:
 			return None
-		
+		except:
+			util.ERROR('SJHttsdTTSBackend: voices',hide_tb=True)
+			self.failFlag = True
+			return None
+
 	def settingList(self,setting,*args):
 		if setting == 'engine':
 			try:
@@ -131,7 +160,9 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			return ret
 		elif setting.startswith('voice.'):
 			ret = []
-			for v in self.voices(args[0]):
+			voices = self.voices(args[0])
+			if not voices: return None
+			for v in voices:
 				v = v.split('.')[-1]
 				ret.append((v,v))
 			return ret
