@@ -31,7 +31,7 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 		wav_path = os.path.join(util.getTmpfs(),'speech.wav')
 		mp3_path = os.path.join(util.getTmpfs(),'speech.mp3')
 		self.runCommand(text,mp3_path)
-		self.subprocess.Popen(['mpg123','-w',wav_path,mp3_path],stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		self.process = subprocess.Popen(['mpg123','-w',wav_path,mp3_path],stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		os.remove(mp3_path)
 		return open(wav_path,'rb')
 		
