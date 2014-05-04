@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import urllib, urllib2, shutil
+import urllib, urllib2, shutil, os, subprocess
 import base, audio
 from lib import util
 
@@ -8,10 +8,12 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'Google'
 	displayName = 'Google'
 	ttsURL = 'http://translate.google.com/translate_tts?tl=en&q={0}'
+	canStreamWav = util.commandIsAvailable('mpg123')
 	interval = 100
 	
 	def __init__(self):
-		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred='mplayer')
+		self.process = None
+		player = audio.MP3Player(audio.UnixExternalMP3PlayerHandler,preferred='mpg123')
 		base.SimpleTTSBackendBase.__init__(self,player,mode=base.SimpleTTSBackendBase.WAVOUT)
 
 	def runCommand(self,text,outFile):
@@ -25,9 +27,21 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 			shutil.copyfileobj(resp,out)
 		return True
 
+	def getWavStream(self,text):
+		wav_path = os.path.join(util.getTmpfs(),'speech.wav')
+		mp3_path = os.path.join(util.getTmpfs(),'speech.mp3')
+		self.runCommand(text,mp3_path)
+		self.subprocess.Popen(['mpg123','-w',wav_path,mp3_path],stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		os.remove(mp3_path)
+		return open(wav_path,'rb')
+		
 	def stop(self):
-		pass
+		if not self.process: return
+		try:
+			self.process.terminate()
+		except:
+			pass
 			
 	@staticmethod
 	def available():
-		return util.commandIsAvailable('mplayer')
+		return audio.UnixExternalMP3PlayerHandler.canPlay()

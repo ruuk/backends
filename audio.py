@@ -104,6 +104,7 @@ class CommandInfo:
 	available = None
 	play = None
 	kill = False
+	types = ('wav',)
 		
 	@classmethod
 	def playArgs(cls,outFile,speed):
@@ -151,6 +152,7 @@ class sox(AdvancedCommandInfo):
 	speed = ('tempo','-s',None)
 	speedMultiplier = 0.01
 	kill = True
+	types = ('wav','mp3')
 
 class mplayer(AdvancedCommandInfo):
 	ID = 'mplayer'
@@ -159,6 +161,14 @@ class mplayer(AdvancedCommandInfo):
 	play = ('mplayer','-really-quiet',None)
 	speed = ('-af','scaletempo','-speed',None)
 	speedMultiplier = 0.01
+	types = ('wav','mp3')
+	
+class mpg123(CommandInfo):
+	ID = 'mpg123'
+	name = 'mpg123'
+	available = ('mpg123','--version')
+	play = ('mpg123','-q',None)
+	types = ('wav','mp3')
 
 class ExternalPlayerHandler(PlayerHandler):
 	players = None
@@ -256,7 +266,19 @@ class ExternalPlayerHandler(PlayerHandler):
 		return players
 
 class UnixExternalPlayerHandler(ExternalPlayerHandler):
-	players = (aplay,paplay,sox,mplayer)
+	players = (aplay,paplay,sox,mplayer,mpg123)
+	
+class UnixExternalMP3PlayerHandler(ExternalPlayerHandler):
+	players = (sox,mplayer,mpg123)
+	
+	@classmethod
+	def canPlay(cls):
+		for p in cls.players:
+			if util.commandIsAvailable(p.ID):
+				if p.ID == 'sox':
+					if not 'mp3' in subprocess.check_output(['sox','--help']): continue
+				return True
+		return False
 	
 class WavPlayer:
 	def __init__(self,external_handler=None,preferred=None,advanced=False):
@@ -321,3 +343,8 @@ class WavPlayer:
 		
 	def close(self):
 		return self.handler.close()
+		
+class MP3Player(WavPlayer):
+	def initPlayer(self):
+		if self.handler: return
+		self.useExternalPlayer()
