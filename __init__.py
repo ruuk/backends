@@ -17,6 +17,13 @@ from google import GoogleTTSBackend
 
 backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,SpeechDispatcherTTSBackend,FliteTTSBackend,ESpeakTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,CepstralTTSBackend,OSXSayTTSBackend,SJHttsdTTSBackend,GoogleTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
 
+def removeBackendsByProvider(to_remove):
+	rem = []
+	for b in backendsByPriority:
+		if b.provider in to_remove:
+			rem.append(b)
+	for r in rem: backendsByPriority.remove(r)
+
 def getAvailableBackends(can_stream_wav=False):
 	available = []
 	for b in backendsByPriority:
