@@ -266,7 +266,7 @@ class ExternalPlayerHandler(PlayerHandler):
 		return players
 
 class UnixExternalPlayerHandler(ExternalPlayerHandler):
-	players = (aplay,paplay,sox,mplayer,mpg123)
+	players = (aplay,paplay,sox,mplayer)
 	
 class UnixExternalMP3PlayerHandler(ExternalPlayerHandler):
 	players = (sox,mplayer,mpg123)
