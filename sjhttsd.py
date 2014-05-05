@@ -9,6 +9,8 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'ttsd'
 	displayName = 'HTTP TTS Server (Requires Running Server)'
 	interval = 100
+	canStreamWav = False
+	
 	settings = {	'engine':	None,
 					'voice':	None,
 					'voice.Flite':	None,

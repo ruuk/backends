@@ -8,6 +8,7 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'Cepstral'
 	displayName = 'Cepstral'
 	interval = 100
+	canStreamWav = False
 	settings = {	'voice':'',
 					'use_aoss':False
 					
