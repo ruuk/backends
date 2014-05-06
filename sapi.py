@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys, wave, array, StringIO
 from base import ThreadedTTSBackend
+from lib import util
 
 class SAPITTSBackend(ThreadedTTSBackend):
 	provider = 'SAPI'
@@ -16,14 +17,24 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	speedMid = 0
 	def __init__(self):
 		import comtypes.client
+		from _ctypes import COMError
 		self.comtypesClient = comtypes.client
-		self.SpVoice = comtypes.client.CreateObject("SAPI.SpVoice")
+		self.COMError = COMError
+		self.resetSAPI()
 		self.update()
 		self.threadedInit()
 		
+	def resetSAPI(self):
+		self.SpVoice = self.comtypesClient.CreateObject("SAPI.SpVoice")
+		
 	def threadedSay(self,text):
 		if not self.SpVoice: return
-		self.SpVoice.Speak(text,1)
+		try:
+			self.SpVoice.Speak(text,1)
+		except self.COMError:
+			util.ERROR('COMError: RESETTING SAPI',hide_tb=True)
+			self.resetSAPI()
+			self.SpVoice.Speak(text,1)
 
 #	def getWavStream(self,text):
 #		#Have SAPI write to file

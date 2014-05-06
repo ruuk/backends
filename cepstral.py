@@ -4,6 +4,17 @@ import os, subprocess
 import base
 from lib import util
 
+def getStartupInfo():
+	if hasattr(subprocess,'STARTUPINFO'): #Windows
+		startupinfo = subprocess.STARTUPINFO()
+		try:
+			startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW #Suppress terminal window
+		except:
+			startupinfo.dwFlags |= 1
+		return startupinfo
+
+	return None
+			
 class CepstralTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'Cepstral'
 	displayName = 'Cepstral'
@@ -16,11 +27,7 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 	
 	def __init__(self):
 		base.SimpleTTSBackendBase.__init__(self,mode=base.SimpleTTSBackendBase.ENGINESPEAK)
-		if hasattr(subprocess,'STARTUPINFO'): #Windows
-			self.startupinfo = subprocess.STARTUPINFO()
-			self.startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW #Suppress terminal window
-		else:
-			self.startupinfo = None
+		self.startupinfo = getStartupInfo()
 		self.update()
 		self.process = None
 
@@ -35,6 +42,9 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 	def update(self):
 		self.voice = self.setting('voice')
 		self.useAOSS = self.setting('use_aoss')
+		if self.useAOSS and not util.commandIsAvailable('aoss'):
+			util.LOG('Cepstral: Use aoss is enabled, but aoss is not found. Disabling.')
+			self.useAOSS = False
 
 	def stop(self):
 		if not self.process: return
@@ -46,7 +56,7 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 	def getVoiceLines(self):
 		import re
 		ret = []
-		out = subprocess.check_output(['swift','--voices']).splitlines()
+		out = subprocess.check_output(['swift','--voices'],startupinfo=self.startupinfo).splitlines()
 		for l in reversed(out):
 			if l.startswith(' ') or l.startswith('-'): break
 			ret.append(re.split('\s+\|\s+',l.strip(),6))
@@ -57,11 +67,11 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 		for v in self.getVoiceLines():
 			ret.append(v[0])
 		return ret
-		
+			
 	@staticmethod
 	def available():
 		try:
-			subprocess.call(['swift', '-V'], stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+			subprocess.call(['swift', '-V'], startupinfo=getStartupInfo(),stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		except (OSError, IOError):
 			return False
 		return True
