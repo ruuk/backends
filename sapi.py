@@ -2,6 +2,7 @@
 import sys, wave, array, StringIO
 from base import ThreadedTTSBackend
 from lib import util
+from xml.sax import saxutils
 
 class SAPITTSBackend(ThreadedTTSBackend):
 	provider = 'SAPI'
@@ -30,12 +31,14 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	def threadedSay(self,text):
 		if not self.SpVoice: return
 		try:
-			self.SpVoice.Speak(text,1)
+			self.SpVoice.Speak(saxutils.escape(text),1)
 		except self.COMError:
 			util.ERROR('COMError: RESETTING SAPI',hide_tb=True)
 			self.resetSAPI()
-			self.SpVoice.Speak(text,1)
-
+			try:
+				self.SpVoice.Speak(saxutils.escape(text),1)
+			except self.COMError:
+				util.ERROR('COMError: SAPI Failed after reset')
 #	def getWavStream(self,text):
 #		#Have SAPI write to file
 #		stream = self.comtypesClient.CreateObject("SAPI.SpFileStream")
