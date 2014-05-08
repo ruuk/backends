@@ -16,6 +16,17 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	speedMin = -10
 	speedMax = 10
 	speedMid = 0
+	
+	baseSSML = '''<?xml version="1.0"?>
+<speak version="1.0"
+         xmlns="http://www.w3.org/2001/10/synthesis"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.w3.org/2001/10/synthesis
+                   http://www.w3.org/TR/speech-synthesis/synthesis.xsd"
+         xml:lang="en-US">
+  <p>{0}</p>
+</speak>'''
+	
 	def __init__(self):
 		import comtypes.client
 		from _ctypes import COMError
@@ -30,13 +41,14 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		
 	def threadedSay(self,text):
 		if not self.SpVoice: return
+		ssml = self.baseSSML.format(saxutils.escape(text))
 		try:
-			self.SpVoice.Speak(saxutils.escape(text),1)
+			self.SpVoice.Speak(ssml,1)
 		except self.COMError:
 			util.ERROR('COMError: RESETTING SAPI',hide_tb=True)
 			self.resetSAPI()
 			try:
-				self.SpVoice.Speak(saxutils.escape(text),1)
+				self.SpVoice.Speak(ssml,1)
 			except self.COMError:
 				util.ERROR('COMError: SAPI Failed after reset')
 #	def getWavStream(self,text):
