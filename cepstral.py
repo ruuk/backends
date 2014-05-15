@@ -35,7 +35,7 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 		args = ['swift']
 		if self.useAOSS: args.insert(0,'aoss')
 		if self.voice: args.extend(('-n',self.voice))
-		args.append(text)
+		args.append(text.encode('utf-8'))
 		self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		while self.process.poll() == None and self.active: util.sleep(10)	
 

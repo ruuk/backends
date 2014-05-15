@@ -98,7 +98,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		args = ['espeak','-w',outFile]
 		if self.voice: args += ['-v',self.voice]
 		if self.speed: args += ['-s',str(self.speed)]
-		args.append(text)
+		args.append(text.encode('utf-8'))
 		subprocess.call(args)
 		return True
 
@@ -106,7 +106,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		args = ['espeak']
 		if self.voice: args.extend(('-v',self.voice))
 		if self.speed: args.extend(('-s',str(self.speed)))
-		args.append(text)
+		args.append(text.encode('utf-8'))
 		self.process = subprocess.Popen(args)
 		while self.process.poll() == None and self.active: util.sleep(10)	
 

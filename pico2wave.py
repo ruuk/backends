@@ -24,7 +24,7 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 	def runCommand(self,text,outFile):
 		args = ['pico2wave']
 		if self.language: args.extend(['-l',self.language])
-		args.extend(['-w', u'{0}'.format(outFile), u'{0}'.format(text)])
+		args.extend(['-w', '{0}'.format(outFile), '{0}'.format(text.encode('utf-8'))])
 		subprocess.call(args)
 		return True
 		

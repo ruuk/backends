@@ -17,7 +17,7 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	speedMax = 10
 	speedMid = 0
 	
-	baseSSML = '''<?xml version="1.0"?>
+	baseSSML = u'''<?xml version="1.0"?>
 <speak version="1.0"
          xmlns="http://www.w3.org/2001/10/synthesis"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

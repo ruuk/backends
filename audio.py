@@ -11,7 +11,7 @@ except:
 PLAYSFX_HAS_USECACHED = False
 
 try:
-	voidWav = os.path.join(xbmc.translatePath(util.xbmcaddon.Addon().getAddonInfo('path')).decode('utf-8'),'resources','void.wav')
+	voidWav = os.path.join(xbmc.translatePath(util.xbmcaddon.Addon().getAddonInfo('path')).decode('utf-8'),'resources','wavs','void.wav')
 	xbmc.playSFX(voidWav,False)
 	PLAYSFX_HAS_USECACHED = True
 except:
@@ -170,6 +170,13 @@ class mpg123(CommandInfo):
 	play = ('mpg123','-q',None)
 	types = ('wav','mp3')
 
+class mpg321(CommandInfo):
+	ID = 'mpg321'
+	name = 'mpg321'
+	available = ('mpg321','--version')
+	play = ('mpg321','-q',None)
+	types = ('wav','mp3')
+	
 class ExternalPlayerHandler(PlayerHandler):
 	players = None
 	def __init__(self,preferred=None,advanced=False):
@@ -269,7 +276,7 @@ class UnixExternalPlayerHandler(ExternalPlayerHandler):
 	players = (aplay,paplay,sox,mplayer)
 	
 class UnixExternalMP3PlayerHandler(ExternalPlayerHandler):
-	players = (sox,mplayer,mpg123)
+	players = (sox,mplayer,mpg123,mpg321)
 	
 	@classmethod
 	def canPlay(cls):

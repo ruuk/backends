@@ -21,6 +21,7 @@ class TTSBackendBase:
 	speedMid = 0
 	speedInt = True
 	dead = False #Backend should flag this true if it's no longer usable
+	_closed = False
 
 	def __enter__(self):
 		return self
@@ -160,6 +161,7 @@ class TTSBackendBase:
 		self.stop()
 
 	def _close(self):
+		self._closed = True
 		self._stop()
 		self.close()
 
@@ -238,7 +240,7 @@ class ThreadedTTSBackend(TTSBackendBase):
 			self.queue.put_nowait(t)
 		
 	def isSpeaking(self):
-		return self._threadedIsSpeaking or not self.queue.empty()
+		return self.active and (self._threadedIsSpeaking or not self.queue.empty())
 		
 	def _stop(self):
 		self._emptyQueue()

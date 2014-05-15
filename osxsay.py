@@ -14,7 +14,7 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 		
 	def threadedSay(self,text):
 		if not text: return
-		self.process = subprocess.Popen(['say', text])
+		self.process = subprocess.Popen(['say', text.encode('utf-8')])
 		while self.process.poll() == None and self.active: util.sleep(10)
 		
 	def isSpeaking(self):
