@@ -14,7 +14,7 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 	
 	def __init__(self):
 		self.process = None
-		player = audio.MP3Player(audio.UnixExternalMP3PlayerHandler,preferred='mpg123')
+		player = audio.MP3Player(preferred='mpg123')
 		base.SimpleTTSBackendBase.__init__(self,player,mode=base.SimpleTTSBackendBase.WAVOUT)
 
 	def threadedSay(self,text):
@@ -57,4 +57,4 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 			
 	@staticmethod
 	def available():
-		return audio.UnixExternalMP3PlayerHandler.canPlay()
+		return audio.MP3Player.canPlay()

@@ -35,6 +35,42 @@ class PlayerHandler:
 			self.outDir = os.path.join(util.profileDirectory(),'xbmc_speech')
 		if not os.path.exists(self.outDir): os.makedirs(self.outDir)
 		
+class WindowsPlayHanlder(PlayerHandler):
+	def __init__(self):
+		import winplay
+		self._player = winplay
+		self.setOutDir()
+		self.outFile = os.path.join(self.outDir,'speech.wav')
+		self.event = threading.Event()
+		self.event.clear()
+
+	def play(self):
+		if not os.path.exists(self.outFile):
+			util.LOG('playSFXHandler.play() - Missing wav file')
+			return
+		audio = self._player.load(self.outFile)
+		audio.play()
+		self.event.clear()
+		self.event.wait(audio.milliseconds() / 1000.0)
+
+	def isPlaying(self):
+		return not self.event.isSet()
+
+	def stop(self):
+		self.event.set()
+
+	def close(self):
+		self.stop()
+	
+	@staticmethod
+	def canPlay(cls):
+		try:
+			import winplay #@analysis:ignore
+			return True
+		except:
+			util.ERROR('TEST')
+		return False
+
 class PlaySFXHandler(PlayerHandler):
 	_xbmcHasStopSFX = hasattr(xbmc,'stopSFX')
 	def __init__(self):
@@ -352,6 +388,19 @@ class WavPlayer:
 		return self.handler.close()
 		
 class MP3Player(WavPlayer):
+	def __init__(self,external_handler=None,preferred=None,advanced=False):
+		handler = external_handler
+		if not handler:
+			if UnixExternalMP3PlayerHandler.canPlay():
+				handler = UnixExternalMP3PlayerHandler
+			elif WindowsPlayHanlder.canPlay():
+				handler = WindowsPlayHanlder
+		WavPlayer.__init__(self,handler,preferred,advanced)
+		
 	def initPlayer(self):
 		if self.handler: return
 		self.useExternalPlayer()
+	
+	@staticmethod
+	def canPlay():
+		return UnixExternalMP3PlayerHandler.canPlay() or WindowsPlayHanlder.canPlay()
