@@ -36,11 +36,12 @@ class PlayerHandler:
 		if not os.path.exists(self.outDir): os.makedirs(self.outDir)
 		
 class WindowsPlayHanlder(PlayerHandler):
-	def __init__(self):
+	def __init__(self,*args,**kwargs):
 		import winplay
 		self._player = winplay
+		self.audio = None
 		self.setOutDir()
-		self.outFile = os.path.join(self.outDir,'speech.wav')
+		self.outFile = os.path.join(self.outDir,'speech.mp3')
 		self.event = threading.Event()
 		self.event.clear()
 
@@ -48,22 +49,27 @@ class WindowsPlayHanlder(PlayerHandler):
 		if not os.path.exists(self.outFile):
 			util.LOG('playSFXHandler.play() - Missing wav file')
 			return
-		audio = self._player.load(self.outFile)
-		audio.play()
+		self.audio = self._player.load(self.outFile)
+		self.audio.play()
 		self.event.clear()
-		self.event.wait(audio.milliseconds() / 1000.0)
+		self.event.wait(self.audio.milliseconds() / 1000.0)
 
+	def getOutFile(self,text): return self.outFile
+	
 	def isPlaying(self):
 		return not self.event.isSet()
 
+	def playerAvailable(self): return True
+	
 	def stop(self):
+		self.audio.stop()
 		self.event.set()
 
 	def close(self):
 		self.stop()
 	
 	@staticmethod
-	def canPlay(cls):
+	def canPlay():
 		try:
 			import winplay #@analysis:ignore
 			return True
