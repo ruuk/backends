@@ -317,6 +317,13 @@ class ExternalPlayerHandler(PlayerHandler):
 class UnixExternalPlayerHandler(ExternalPlayerHandler):
 	players = (aplay,paplay,sox,mplayer)
 	
+	@classmethod
+	def canPlay(cls):
+		for p in cls.players:
+			if util.commandIsAvailable(p.ID):
+				return True
+		return False
+	
 class UnixExternalMP3PlayerHandler(ExternalPlayerHandler):
 	players = (sox,mplayer,mpg123,mpg321)
 	
@@ -392,6 +399,10 @@ class WavPlayer:
 		
 	def close(self):
 		return self.handler.close()
+		
+	@staticmethod
+	def canPlay():
+		return PlaySFXHandler.hasStopSFX() or UnixExternalPlayerHandler.canPlay()
 		
 class MP3Player(WavPlayer):
 	def __init__(self,external_handler=None,preferred=None,advanced=False):
