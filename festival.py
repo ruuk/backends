@@ -3,7 +3,7 @@ import os, subprocess
 from base import TTSBackendBase
 
 class FestivalTTSBackend(TTSBackendBase):
-	provider = 'festival'
+	provider = 'Festival'
 	displayName = 'Festival'
 	settings = {'voice':''}
 	
