@@ -53,7 +53,7 @@ def getVoices(provider):
 	voices = None
 	bClass = getBackendByProvider(provider)
 	if bClass:
-		with bClass() as b: voices = b.voices()
+		voices = bClass.voices()
 	return voices
 	
 def getLanguages(provider):
@@ -67,7 +67,7 @@ def getSettingsList(provider,setting,*args):
 	settings = None
 	bClass = getBackendByProvider(provider)
 	if bClass:
-		with bClass() as b: settings = b.settingList(setting,*args)
+		settings = bClass.settingList(setting,*args)
 	return settings
 
 def getPlayers(provider):

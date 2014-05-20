@@ -11,9 +11,9 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 					'output_via_flite':False
 	}
 	interval = 100
+	onATV2 = util.isATV2()
 	
 	def __init__(self):
-		self.onATV2 = util.isATV2()
 		player = audio.WavPlayer(audio.UnixExternalPlayerHandler)
 		base.SimpleTTSBackendBase.__init__(self,player, self.getMode())
 		self.process = None
@@ -29,10 +29,6 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 	def runCommandAndSpeak(self,text):
 		self.process = subprocess.Popen(['flite', '-voice', self.voice, '-t', text.encode('utf-8')])
 		while self.process.poll() == None and self.active: util.sleep(10)
-
-	def voices(self):
-		if self.onATV2: return None
-		return subprocess.check_output(['flite','-lv']).split(': ',1)[-1].strip().split(' ')
 		
 	def update(self):
 		self.voice = self.setting('voice')
@@ -51,6 +47,12 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 		except:
 			pass
 
+	@classmethod
+	def settingList(cls,setting,*args):
+		if cls.onATV2: return None
+		if setting == 'voice':
+			return [(v,v) for v in subprocess.check_output(['flite','-lv']).split(': ',1)[-1].strip().split(' ')]
+		
 	@staticmethod
 	def available():
 		try:

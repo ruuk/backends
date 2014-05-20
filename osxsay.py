@@ -8,15 +8,25 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 	displayName = 'OSX Say (OSX Internal)'
 	canStreamWav = True
 	interval = 100
+	voicesPath = os.path.join(util.configDirectory(),'{0}.voices'.format(provider))
+	settings = {	'voice':''
+	}
 	
 	def __init__(self):
-		self.process = None
+		import cocoapy
+		self.cocoapy = cocoapy
+		self.pool = cocoapy.ObjCClass('NSAutoreleasePool').alloc().init()
+		self.synth = cocoapy.ObjCClass('NSSpeechSynthesizer').alloc().init()
+		voices = self.longVoices()
+		self.saveVoices(voices) #Save the voices to file, so we can get provide them for selection without initializing the synth again
+		self.update()
 		self.threadedInit()
 		
 	def threadedSay(self,text):
 		if not text: return
-		self.process = subprocess.Popen(['say', text.encode('utf-8')])
-		while self.process.poll() == None and self.active: util.sleep(10)
+		self.synth.startSpeakingString_(self.cocoapy.get_NSString(text))
+		while self.synth.isSpeaking():
+			util.sleep(10)
 		
 	def getWavStream(self,text):
 		wav_path = os.path.join(util.getTmpfs(),'speech.wav')
@@ -24,15 +34,78 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 		return open(wav_path,'rb')
 		
 	def isSpeaking(self):
-		return (self.process and self.process.poll() == None) or ThreadedTTSBackend.isSpeaking(self)
+		return self.synth.isSpeaking()
 
+	def longVoices(self):
+		vNSCFArray = self.synth.availableVoices()
+		voices = [self.cocoapy.cfstring_to_string(vNSCFArray.objectAtIndex_(i,self.cocoapy.get_NSString('UTF8String'))) for i in range(vNSCFArray.count())]
+		return voices
+	
+	def update(self):
+		self.voice = self.setting('voice')
+		if self.voice: self.synth.setVoice_(self.cocoapy.get_NSString(self.voice))
+		
 	def stop(self):
-		if not self.process: return
-		try:
-			self.process.terminate()
-		except:
-			pass
+		self.synth.stopSpeaking()
 
+	def close(self):
+		self.pool.release()
+	
+	@classmethod
+	def settingList(cls,setting,*args):
+		if setting == 'voice':
+			lvoices = cls.loadVoices()
+			if not lvoices: return None
+			voices = [(v,v.rsplit('.',1)[-1]) for v in lvoices]
+			return voices
+		
+	@classmethod
+	def saveVoices(cls,voices):
+		if not voices: return
+		out = '\n'.join(voices)
+		with open(cls.voicesPath,'w') as f: f.write(out)
+		
+	@classmethod
+	def loadVoices(cls):
+		if not os.path.exists(cls.voicesPath): return None
+		with open(cls.voicesPath,'r') as f:
+			return f.read().splitlines()
+			
 	@staticmethod
 	def available():
 		return sys.platform == 'darwin' and not util.isATV2()
+
+#OLD
+#class OSXSayTTSBackend(ThreadedTTSBackend):
+#	provider = 'OSXSay'
+#	displayName = 'OSX Say (OSX Internal)'
+#	canStreamWav = True
+#	interval = 100
+#	
+#	def __init__(self):
+#		self.process = None
+#		self.threadedInit()
+#		
+#	def threadedSay(self,text):
+#		if not text: return
+#		self.process = subprocess.Popen(['say', text.encode('utf-8')])
+#		while self.process.poll() == None and self.active: util.sleep(10)
+#		
+#	def getWavStream(self,text):
+#		wav_path = os.path.join(util.getTmpfs(),'speech.wav')
+#		subprocess.call(['say', '-o', wav_path,'--file-format','WAVE','--data-format','LEI16@22050',text.encode('utf-8')])
+#		return open(wav_path,'rb')
+#		
+#	def isSpeaking(self):
+#		return (self.process and self.process.poll() == None) or ThreadedTTSBackend.isSpeaking(self)
+#
+#	def stop(self):
+#		if not self.process: return
+#		try:
+#			self.process.terminate()
+#		except:
+#			pass
+#
+#	@staticmethod
+#	def available():
+#		return sys.platform == 'darwin' and not util.isATV2()

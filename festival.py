@@ -12,12 +12,6 @@ class FestivalTTSBackend(TTSBackendBase):
 		self.startFestivalProcess()
 		self._isSpeaking = False
 		
-	def voices(self):
-		p = subprocess.Popen(['festival','-i'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-		d = p.communicate('(voice.list)')
-		l = map(str.strip,d[0].rsplit('> (',1)[-1].rsplit(')',1)[0].split('\n'))
-		return l or None
-		
 	def startFestivalProcess(self):
 		#LOG('Starting Festival...')
 		#self.festivalProcess = subprocess.Popen(['festival'],shell=True,stdin=subprocess.PIPE)
@@ -46,6 +40,15 @@ class FestivalTTSBackend(TTSBackendBase):
 		#self.festivalProcess.terminate()
 		pass
 	
+	@classmethod
+	def settingList(cls,setting,*args):
+		if setting == 'voice':
+			p = subprocess.Popen(['festival','-i'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+			d = p.communicate('(voice.list)')
+			l = map(str.strip,d[0].rsplit('> (',1)[-1].rsplit(')',1)[0].split('\n'))
+			if l: return [(v,v) for v in l]
+		return None
+		
 	@staticmethod
 	def available():
 		try:

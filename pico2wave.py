@@ -27,20 +27,22 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 		args.extend(['-w', '{0}'.format(outFile), '{0}'.format(text.encode('utf-8'))])
 		subprocess.call(args)
 		return True
-		
-	def languages(self):
-		try:
-			out = subprocess.check_output(['pico2wave','-l','NONE','-w','/dev/null','X'],stderr=subprocess.STDOUT)
-		except subprocess.CalledProcessError, e:
-			out = e.output
-		if not 'languages:' in out: return None
-		
-		return out.split('languages:',1)[-1].split('\n\n')[0].strip('\n').split('\n')
 
 	def update(self):
 		self.language = self.setting('language')
 		self.setSpeed(self.setting('speed'))
+	
+	@classmethod
+	def settingList(cls,setting,*args):
+		if setting == 'language':
+			try:
+				out = subprocess.check_output(['pico2wave','-l','NONE','-w','/dev/null','X'],stderr=subprocess.STDOUT)
+			except subprocess.CalledProcessError, e:
+				out = e.output
+			if not 'languages:' in out: return None
 		
+		return [ (v,v) for v in out.split('languages:',1)[-1].split('\n\n')[0].strip('\n').split('\n')]
+
 	@staticmethod
 	def available():
 		try:

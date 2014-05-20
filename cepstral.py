@@ -53,21 +53,30 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 		except:
 			pass
 	
-	def getVoiceLines(self):
+	@classmethod
+	def getVoiceLines(cls):
 		import re
 		ret = []
-		out = subprocess.check_output(['swift','--voices'],startupinfo=self.startupinfo).splitlines()
+		out = subprocess.check_output(['swift','--voices'],startupinfo=getStartupInfo()).splitlines()
 		for l in reversed(out):
 			if l.startswith(' ') or l.startswith('-'): break
 			ret.append(re.split('\s+\|\s+',l.strip(),6))
 		return ret
-			
-	def voices(self):
+	
+	@classmethod	
+	def voices(cls):
 		ret = []
-		for v in self.getVoiceLines():
-			ret.append(v[0])
+		for v in cls.getVoiceLines():
+			voice = v[0]
+			ret.append((voice,voice))
 		return ret
 			
+	@classmethod
+	def settingList(cls,setting,*args):
+		if setting == 'voice':
+			return cls.voices()
+		return None
+		
 	@staticmethod
 	def available():
 		try:

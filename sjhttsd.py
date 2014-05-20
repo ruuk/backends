@@ -150,7 +150,9 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			self.failFlag = True
 			return None
 
-	def settingList(self,setting,*args):
+	@classmethod
+	def settingList(cls,setting,*args):
+		self = cls()
 		if setting == 'engine':
 			try:
 				engines = urllib2.urlopen(self.httphost + 'engines/wav',data='').read().splitlines()

@@ -128,15 +128,19 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 			self.process.terminate()
 		except:
 			pass
-
-	def voices(self):
-		import re
-		ret = []
-		out = subprocess.check_output(['espeak','--voices']).splitlines()
-		out.pop(0)
-		for l in out:
-			ret.append(re.split('\s+',l.strip(),5)[3])
-		return ret
+	
+	@classmethod
+	def settingList(cls,setting,*args):
+		if setting == 'voice':
+			import re
+			ret = []
+			out = subprocess.check_output(['espeak','--voices']).splitlines()
+			out.pop(0)
+			for l in out:
+				voice = re.split('\s+',l.strip(),5)[3]
+				ret.append((voice,voice))
+			return ret
+		return None
 		
 	@staticmethod
 	def available():

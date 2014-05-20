@@ -109,17 +109,6 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		if not self.SpVoice: return
 		self.SpVoice.Speak('',3)
 
-	def voices(self):
-		voices=[]
-		v=self.SpVoice.getVoices()
-		for i in xrange(len(v)):
-			try:
-				name=v[i].GetDescription()
-			except COMError: #analysis:ignore
-				pass
-			voices.append(name)
-		return voices
-
 	def isSpeaking(self):
 		return ThreadedTTSBackend.isSpeaking(self) or None
 		
@@ -141,7 +130,21 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	def close(self):
 		del self.SpVoice
 		self.SpVoice = None
-		
+	
+	@classmethod
+	def settingList(cls,setting,*args):
+		self = cls()
+		if setting == 'voice':
+			voices=[]
+			v=self.SpVoice.getVoices()
+			for i in xrange(len(v)):
+				try:
+					name=v[i].GetDescription()
+				except COMError: #analysis:ignore
+					pass
+				voices.append((name,name))
+			return voices
+
 	@staticmethod
 	def available():
 		return sys.platform.lower().startswith('win')

@@ -69,21 +69,8 @@ class TTSBackendBase:
 			self.insertPause()
 			self.say(t)
 
-	def voices(self):
-		"""Returns a list of voice string names
-		
-		May be overridden by subclasses. Default implementation returns None.
-		"""
-		return None
-		
-	def languages(self):
-		"""Returns a list of language string names
-		
-		May be overridden by subclasses. Default implementation returns None.
-		"""
-		return None
-
-	def settingList(self,setting,*args):
+	@classmethod
+	def settingList(cls,setting,*args):
 		"""Returns a list of options for a setting
 		
 		May be overridden by subclasses. Default implementation returns None.
