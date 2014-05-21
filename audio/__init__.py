@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, subprocess, wave, hashlib, threading
+import os, sys, subprocess, wave, hashlib, threading
 
 from lib import util
 
@@ -70,11 +70,12 @@ class WindowsPlayHanlder(PlayerHandler):
 	
 	@staticmethod
 	def canPlay():
+		if not sys.platform.startswith('win'): return False
 		try:
 			import winplay #@analysis:ignore
 			return True
 		except:
-			util.ERROR('TEST')
+			util.ERROR('winplay import failed',hide_tb=True)
 		return False
 
 class PlaySFXHandler(PlayerHandler):
@@ -149,7 +150,7 @@ class CommandInfo:
 	types = ('wav',)
 		
 	@classmethod
-	def playArgs(cls,outFile,speed):
+	def playArgs(cls,outFile,speed,volume):
 		args = []
 		args.extend(cls.play)
 		args[args.index(None)] = outFile
@@ -159,17 +160,21 @@ class AdvancedCommandInfo(CommandInfo):
 	_advanced = True
 	speed = None
 	speedMultiplier = 1
+	volume = None
 	
 	@classmethod
 	def speedArg(cls,speed):
 		return str(speed * cls.speedMultiplier)
 		
 	@classmethod
-	def playArgs(cls,outFile,speed):
+	def playArgs(cls,outFile,speed,volume):
 		args = []
 		args.extend(cls.play)
 		args[args.index(None)] = outFile
-		if speed:
+		if volume != None and cls.volume:
+			args.extend(cls.volume)
+			args[args.index(None)] = str(volume)
+		if speed and cls.speed:
 			args.extend(cls.speed)
 			args[args.index(None)] = cls.speedArg(speed)
 		return args
@@ -193,6 +198,7 @@ class sox(AdvancedCommandInfo):
 	play = ('play','-q',None)
 	speed = ('tempo','-s',None)
 	speedMultiplier = 0.01
+	volume = ('vol',None,'dB')
 	kill = True
 	types = ('wav','mp3')
 
@@ -201,10 +207,26 @@ class mplayer(AdvancedCommandInfo):
 	name = 'MPlayer'
 	available = ('mplayer','--help')
 	play = ('mplayer','-really-quiet',None)
-	speed = ('-af','scaletempo','-speed',None)
+	speed = 'scaletempo=scale={0}:speed=none'
 	speedMultiplier = 0.01
+	volume = 'volume={0}'
 	types = ('wav','mp3')
 	
+	@classmethod
+	def playArgs(cls,outFile,speed,volume):
+		args = []
+		args.extend(cls.play)
+		args[args.index(None)] = outFile
+		if speed or volume != None:
+			args.append('-af')
+			filters = []
+			if speed:
+				filters.append(cls.speed.format(cls.speedArg(speed)))
+			if volume != None:
+				filters.append(cls.volume.format(volume))
+			args.append(','.join(filters))
+		return args
+		
 class mpg123(CommandInfo):
 	ID = 'mpg123'
 	name = 'mpg123'
@@ -227,6 +249,7 @@ class ExternalPlayerHandler(PlayerHandler):
 		self._wavProcess = None
 		self._player = False
 		self.speed = 0
+		self.volume = None
 		self.active = True
 		self.hasAdvancedPlayer = False
 		self._getAvailablePlayers()
@@ -277,8 +300,12 @@ class ExternalPlayerHandler(PlayerHandler):
 	def setSpeed(self,speed):
 		self.speed = speed
 		
+	def setVolume(self,volume):
+		self.volume = volume
+		
 	def play(self):
-		self._wavProcess = subprocess.Popen(self._player.playArgs(self.outFile,self.speed),stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		args = self._player.playArgs(self.outFile,self.speed,self.volume)
+		self._wavProcess = subprocess.Popen(args,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		
 		while self._wavProcess.poll() == None and self.active: util.sleep(10)
 		
@@ -326,6 +353,10 @@ class UnixExternalPlayerHandler(ExternalPlayerHandler):
 	
 class UnixExternalMP3PlayerHandler(ExternalPlayerHandler):
 	players = (sox,mplayer,mpg123,mpg321)
+	
+	def __init__(self,*args,**kwargs):
+		ExternalPlayerHandler.__init__(self,*args,**kwargs)
+		self.outFile = os.path.join(self.outDir,'speech.mp3')
 	
 	@classmethod
 	def canPlay(cls):
@@ -384,6 +415,9 @@ class WavPlayer:
 		
 	def setSpeed(self,speed):
 		return self.handler.setSpeed(speed)
+		
+	def setVolume(self,volume):
+		return self.handler.setVolume(volume)
 		
 	def getOutFile(self,text):
 		return self.handler.getOutFile(text)

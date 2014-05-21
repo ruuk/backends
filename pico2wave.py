@@ -30,6 +30,7 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 
 	def update(self):
 		self.language = self.setting('language')
+		self.setPlayer(self.setting('player'))
 		self.setSpeed(self.setting('speed'))
 	
 	@classmethod

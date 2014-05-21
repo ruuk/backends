@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import audio
 import base
-import urllib, urllib2
+import urllib, urllib2, socket
 from lib import util
 import shutil
 
@@ -158,6 +158,11 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 				engines = urllib2.urlopen(self.httphost + 'engines/wav',data='').read().splitlines()
 			except urllib2.HTTPError:
 				return None
+			except:
+				util.ERROR('SJHttsdTTSBackend: engines',hide_tb=True)
+				self.failFlag = True
+				return None
+				
 			ret = []
 			for e in engines:
 				ret.append(e.split('.',1))

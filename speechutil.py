@@ -4,6 +4,7 @@ import urllib, urllib2, shutil, os
 import base, audio
 from lib import util
 import textwrap
+import asyncconnections
 
 class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'speechutil'
@@ -26,10 +27,14 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
 			self.player.play()
 
 	def runCommand(self,text,outFile):
+		h = asyncconnections.Handler()
+		o = urllib2.build_opener(h)
 		url = self.ttsURL.format(urllib.quote(text.encode('utf-8')))
 		req = urllib2.Request(url, headers={ 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36' })
 		try:
-			resp = urllib2.urlopen(req)
+			resp = o.open(req)
+		except (asyncconnections.StopRequestedException, asyncconnections.AbortRequestedException):
+			return False
 		except:
 			util.ERROR('Failed to open speechutil.com TTS URL',hide_tb=True)
 			return False
@@ -43,6 +48,9 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
 		if not self.runCommand(text,wav_path): return None
 		return open(wav_path,'rb')
 			
+	def stop(self):
+		asyncconnections.StopConnection()
+		
 	@staticmethod
 	def available():
 		return audio.WavPlayer.canPlay()

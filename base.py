@@ -281,6 +281,9 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def setSpeed(self,speed):
 		self.player.setSpeed(speed)
 		
+	def setVolume(self,volume):
+		self.player.setVolume(volume)
+		
 	def runCommand(self,text,outFile):
 		"""Convert text to speech and output to a .wav file
 		
