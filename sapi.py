@@ -117,7 +117,7 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		self.speed = self.setting('speed')
 		self.volume = self.setting('volume')
 		self.SpVoice.Rate = self.speed
-		self.SpVoice.SetVolume(self.volume)
+		self.SpVoice.Volume = self.volume
 		voice_name = self.setting('voice')
 		if voice_name:
 			v=self.SpVoice.getVoices()
