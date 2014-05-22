@@ -45,7 +45,7 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 	ttsURL = 'http://translate.google.com/translate_tts?tl={0}&q={1}'
 	canStreamWav = util.commandIsAvailable('mpg123')
 	interval = 100
-	settings = {	'language':'us',
+	settings = {	'language':'en',
 					'player':None,
 					'volume':0
 	}

@@ -40,6 +40,8 @@ class WindowsPlayHanlder(PlayerHandler):
 		import winplay
 		self._player = winplay
 		self.audio = None
+		self.speed = 0
+		self.volume = None
 		self.setOutDir()
 		self.outFile = os.path.join(self.outDir,'speech.mp3')
 		self.event = threading.Event()
@@ -54,6 +56,12 @@ class WindowsPlayHanlder(PlayerHandler):
 		self.event.clear()
 		self.event.wait(self.audio.milliseconds() / 1000.0)
 
+	def setSpeed(self,speed):
+		self.speed = speed
+		
+	def setVolume(self,volume):
+		self.volume = volume
+
 	def getOutFile(self,text): return self.outFile
 	
 	def isPlaying(self):
@@ -62,7 +70,7 @@ class WindowsPlayHanlder(PlayerHandler):
 	def playerAvailable(self): return True
 	
 	def stop(self):
-		self.audio.stop()
+		if self.audio: self.audio.stop()
 		self.event.set()
 
 	def close(self):

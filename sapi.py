@@ -8,7 +8,8 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	provider = 'SAPI'
 	displayName = 'SAPI (Windows Internal)'
 	settings = {	'voice':'',
-					'speed':0
+					'speed':0,
+					'volume':100
 	
 	}
 	canStreamWav = True
@@ -114,7 +115,9 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		
 	def update(self):
 		self.speed = self.setting('speed')
+		self.volume = self.setting('volume')
 		self.SpVoice.Rate = self.speed
+		self.SpVoice.SetVolume(self.volume)
 		voice_name = self.setting('voice')
 		if voice_name:
 			v=self.SpVoice.getVoices()
