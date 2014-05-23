@@ -21,7 +21,10 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 	interval = 100
 	canStreamWav = False
 	settings = {	'voice':'',
-					'use_aoss':False
+					'use_aoss':False,
+					'speed':170,
+					'volume':0,
+					'pitch':0
 					
 	}
 	
@@ -35,16 +38,22 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 		args = ['swift']
 		if self.useAOSS: args.insert(0,'aoss')
 		if self.voice: args.extend(('-n',self.voice))
+		args.extend(('-p','audio/volume={0},speech/rate={1},speech/pitch/shift={2}'.format(self.volume,self.rate,self.pitch)))
 		args.append(text.encode('utf-8'))
 		self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 		while self.process.poll() == None and self.active: util.sleep(10)	
 
 	def update(self):
 		self.voice = self.setting('voice')
+		self.rate = self.setting('speed')
 		self.useAOSS = self.setting('use_aoss')
 		if self.useAOSS and not util.commandIsAvailable('aoss'):
 			util.LOG('Cepstral: Use aoss is enabled, but aoss is not found. Disabling.')
 			self.useAOSS = False
+		volume = self.setting('volume')
+		self.volume = int(round(100 * (10**(volume/20.0)))) #convert from dB to percent
+		pitch = self.setting('pitch')
+		self.pitch = 0.4 + ((pitch+6)/20.0) * 2 #Convert from (-6 to +14) value to (0.4 to 2.4)
 
 	def stop(self):
 		if not self.process: return

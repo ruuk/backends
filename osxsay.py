@@ -9,7 +9,9 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 	canStreamWav = True
 	interval = 100
 	voicesPath = os.path.join(util.configDirectory(),'{0}.voices'.format(provider))
-	settings = {	'voice':''
+	settings = {	'voice':'',
+					'volume':100,
+					'speed':0
 	}
 	
 	def __init__(self):
@@ -43,7 +45,11 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 	
 	def update(self):
 		self.voice = self.setting('voice')
+		self.volume = self.setting('volume') / 100.0
+		self.rate = self.setting('speed')
 		if self.voice: self.synth.setVoice_(self.cocoapy.get_NSString(self.voice))
+		if self.volume: self.synth.setVolume_(self.volume)
+		if self.rate: self.synth.setRate_(self.rate)
 		
 	def stop(self):
 		self.synth.stopSpeaking()

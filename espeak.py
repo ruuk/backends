@@ -7,6 +7,91 @@ import ctypes.util
 import os
 from lib import util
 
+
+class ESpeakTTSBackend(base.SimpleTTSBackendBase):
+	provider = 'eSpeak'
+	displayName = 'eSpeak'
+	interval = 100
+	speedMin = 80
+	speedMax = 450
+	speedMid = 175
+	settings = {	'voice':'',
+					'speed':0,
+					'output_via_espeak':False,
+					'player':None,
+					'volume':0
+	}
+
+	def __init__(self):
+		preferred = self.setting('player') or None
+		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=preferred)
+		base.SimpleTTSBackendBase.__init__(self,player,self.getMode())
+		self.baseUpdate()
+		self.process = None
+
+	def runCommand(self,text,outFile):
+		args = ['espeak','-w',outFile]
+		if self.voice: args += ['-v',self.voice]
+		if self.speed: args += ['-s',str(self.speed)]
+		args.append(text.encode('utf-8'))
+		subprocess.call(args)
+		return True
+
+	def runCommandAndSpeak(self,text):
+		args = ['espeak']
+		if self.voice: args.extend(('-v',self.voice))
+		if self.speed: args.extend(('-s',str(self.speed)))
+		if self.volume != 100: args.extend(('-a',str(self.volume)))
+		args.append(text.encode('utf-8'))
+		self.process = subprocess.Popen(args)
+		while self.process.poll() == None and self.active: util.sleep(10)	
+
+	def baseUpdate(self):
+		self.voice = self.setting('voice')
+		self.speed = self.setting('speed')
+		volume = self.setting('volume')
+		self.setVolume(volume)
+		self.volume = int(round(100 * (10**(volume/20.0)))) #convert from dB to percent
+		
+	def update(self):
+		self.setMode(self.getMode())
+		self.setPlayer(self.setting('player'))
+		self.baseUpdate()
+
+	def getMode(self):
+		if self.setting('output_via_espeak'):
+			return base.SimpleTTSBackendBase.ENGINESPEAK
+		else:
+			return base.SimpleTTSBackendBase.WAVOUT
+
+	def stop(self):
+		if not self.process: return
+		try:
+			self.process.terminate()
+		except:
+			pass
+	
+	@classmethod
+	def settingList(cls,setting,*args):
+		if setting == 'voice':
+			import re
+			ret = []
+			out = subprocess.check_output(['espeak','--voices']).splitlines()
+			out.pop(0)
+			for l in out:
+				voice = re.split('\s+',l.strip(),5)[3]
+				ret.append((voice,voice))
+			return ret
+		return None
+		
+	@staticmethod
+	def available():
+		try:
+			subprocess.call(['espeak','--version'], stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		except:
+			return False
+		return True
+
 class espeak_VOICE(ctypes.Structure):
 	_fields_=[
 		('name',ctypes.c_char_p),
@@ -20,6 +105,8 @@ class espeak_VOICE(ctypes.Structure):
 		('spare',ctypes.c_void_p),
 	]
 
+
+######### BROKEN ctypes method ############
 class ESpeakCtypesTTSBackend(base.TTSBackendBase):
 	provider = 'eSpeak-ctypes'
 	displayName = 'eSpeak (ctypes)'
@@ -72,80 +159,3 @@ class ESpeakCtypesTTSBackend(base.TTSBackendBase):
 			voiceList.append(os.path.basename(pvoices[index].contents.identifier))
 			index+=1
 		return voiceList
-
-class ESpeakTTSBackend(base.SimpleTTSBackendBase):
-	provider = 'eSpeak'
-	displayName = 'eSpeak'
-	interval = 100
-	speedMin = 80
-	speedMax = 450
-	speedMid = 175
-	settings = {	'voice':'',
-					'speed':0,
-					'output_via_espeak':False,
-					'player':None
-	}
-
-	def __init__(self):
-		preferred = self.setting('player') or None
-		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=preferred)
-		base.SimpleTTSBackendBase.__init__(self,player,self.getMode())
-		self.voice = self.setting('voice')
-		self.speed = self.setting('speed')
-		self.process = None
-
-	def runCommand(self,text,outFile):
-		args = ['espeak','-w',outFile]
-		if self.voice: args += ['-v',self.voice]
-		if self.speed: args += ['-s',str(self.speed)]
-		args.append(text.encode('utf-8'))
-		subprocess.call(args)
-		return True
-
-	def runCommandAndSpeak(self,text):
-		args = ['espeak']
-		if self.voice: args.extend(('-v',self.voice))
-		if self.speed: args.extend(('-s',str(self.speed)))
-		args.append(text.encode('utf-8'))
-		self.process = subprocess.Popen(args)
-		while self.process.poll() == None and self.active: util.sleep(10)	
-
-	def update(self):
-		self.voice = self.setting('voice')
-		self.speed = self.setting('speed')
-		self.setMode(self.getMode())
-		self.setPlayer(self.setting('player'))
-
-	def getMode(self):
-		if self.setting('output_via_espeak'):
-			return base.SimpleTTSBackendBase.ENGINESPEAK
-		else:
-			return base.SimpleTTSBackendBase.WAVOUT
-
-	def stop(self):
-		if not self.process: return
-		try:
-			self.process.terminate()
-		except:
-			pass
-	
-	@classmethod
-	def settingList(cls,setting,*args):
-		if setting == 'voice':
-			import re
-			ret = []
-			out = subprocess.check_output(['espeak','--voices']).splitlines()
-			out.pop(0)
-			for l in out:
-				voice = re.split('\s+',l.strip(),5)[3]
-				ret.append((voice,voice))
-			return ret
-		return None
-		
-	@staticmethod
-	def available():
-		try:
-			subprocess.call(['espeak','--version'], stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-		except:
-			return False
-		return True

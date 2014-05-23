@@ -5,10 +5,13 @@ from base import TTSBackendBase
 class FestivalTTSBackend(TTSBackendBase):
 	provider = 'Festival'
 	displayName = 'Festival'
-	settings = {'voice':''}
+	settings = {	'voice':'',
+					'volume':0,
+					'speed':0,
+	}
 	
 	def __init__(self):
-		self.voice = self.setting('voice')
+		self.update()
 		self.startFestivalProcess()
 		self._isSpeaking = False
 		
@@ -23,9 +26,12 @@ class FestivalTTSBackend(TTSBackendBase):
 		##self.festivalProcess.send_signal(signal.SIGINT)
 		#self.festivalProcess = subprocess.Popen(['festival'],shell=True,stdin=subprocess.PIPE)
 		voice = ''
+		durMult = ''
 		if self.voice: voice = '(voice_{0})\n'.format(self.voice)
+		if self.durationMultiplier: durMult = "(Parameter.set 'Duration_Stretch {0})\n".format(self.durationMultiplier)
 		self.festivalProcess = subprocess.Popen(['festival','--pipe'],shell=True,stdin=subprocess.PIPE)
-		self.festivalProcess.communicate('{0}(SayText "{1}")\n'.format(voice,text.encode('utf-8')))
+		out = '{0}{1}(utt.play (utt.wave.rescale (SynthText "{2}") {3:.2f} nil))\n'.format(voice,durMult,text.encode('utf-8'),self.volume)
+		self.festivalProcess.communicate(out)
 		#if self.festivalProcess.poll() != None: self.startFestivalProcess()
 		self._isSpeaking = False
 		
@@ -34,7 +40,11 @@ class FestivalTTSBackend(TTSBackendBase):
 		
 	def update(self):
 		self.voice = self.setting('voice')
-		
+		volume = self.setting('volume')
+		self.volume = 1 * (10**(volume/20.0)) #convert from dB to percent
+		speed = self.setting('speed')
+		self.durationMultiplier = 1.8 - (((speed + 16)/28.0) * 1.4) #Convert from (-16 to +12) value to (1.8 to 0.4)
+
 	def close(self):
 		#if self.festivalProcess.poll() != None: return
 		#self.festivalProcess.terminate()

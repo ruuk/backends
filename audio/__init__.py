@@ -158,11 +158,16 @@ class CommandInfo:
 	types = ('wav',)
 		
 	@classmethod
-	def playArgs(cls,outFile,speed,volume):
+	def baseArgs(cls,outFile):
 		args = []
 		args.extend(cls.play)
 		args[args.index(None)] = outFile
 		return args
+		
+	@classmethod
+	def playArgs(cls,outFile,speed,volume):
+		return cls.baseArgs(outFile)
+		
 	
 class AdvancedCommandInfo(CommandInfo):
 	_advanced = True
@@ -176,10 +181,8 @@ class AdvancedCommandInfo(CommandInfo):
 		
 	@classmethod
 	def playArgs(cls,outFile,speed,volume):
-		args = []
-		args.extend(cls.play)
-		args[args.index(None)] = outFile
-		if volume != None and cls.volume:
+		args = cls.baseArgs(outFile)
+		if volume and cls.volume:
 			args.extend(cls.volume)
 			args[args.index(None)] = str(volume)
 		if speed and cls.speed:
@@ -198,6 +201,15 @@ class paplay(CommandInfo):
 	name = 'paplay'
 	available = ('paplay','--version')
 	play = ('paplay',None)
+	volume = ('--volume',None)
+
+	@classmethod
+	def playArgs(cls,outFile,speed,volume):
+		args = cls.baseArgs(outFile)
+		if volume:
+			args.extend(cls.volume)
+			args[args.index(None)] = str(int(65536 * (10**(volume/20.0)))) #Convert dB to paplay value
+		return args
 
 class sox(AdvancedCommandInfo):
 	ID = 'sox'
@@ -222,10 +234,8 @@ class mplayer(AdvancedCommandInfo):
 	
 	@classmethod
 	def playArgs(cls,outFile,speed,volume):
-		args = []
-		args.extend(cls.play)
-		args[args.index(None)] = outFile
-		if speed or volume != None:
+		args = cls.baseArgs(outFile)
+		if speed or volume:
 			args.append('-af')
 			filters = []
 			if speed:

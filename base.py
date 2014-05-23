@@ -20,6 +20,7 @@ class TTSBackendBase:
 	speedMax = 0
 	speedMid = 0
 	speedInt = True
+	_loadedSettings = {}
 	dead = False #Backend should flag this true if it's no longer usable
 	_closed = False
 
@@ -77,12 +78,12 @@ class TTSBackendBase:
 		"""
 		return None
 		
-	def setting(self,setting):
+	@classmethod
+	def setting(cls,setting):
 		"""Returns a backend setting, or default if not set
 		"""
-		if not hasattr(self,'_loadedSettings'): self._loadedSettings = {}
-		self._loadedSettings[setting] = util.getSetting('{0}.{1}'.format(setting,self.provider),self.settings.get(setting))
-		return self._loadedSettings[setting]
+		cls._loadedSettings[setting] = util.getSetting('{0}.{1}'.format(setting,cls.provider),cls.settings.get(setting))
+		return cls._loadedSettings[setting]
 
 	def insertPause(self,ms=500):
 		"""Insert a pause of ms milliseconds

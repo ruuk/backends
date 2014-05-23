@@ -12,7 +12,8 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 	speedMid = 100
 	settings = {	'language':'',
 					'speed':0,
-					'player':None
+					'player':None,
+					'volume':0
 	}
 
 	def __init__(self):
@@ -32,6 +33,7 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 		self.language = self.setting('language')
 		self.setPlayer(self.setting('player'))
 		self.setSpeed(self.setting('speed'))
+		self.setVolume(self.setting('volume'))
 	
 	@classmethod
 	def settingList(cls,setting,*args):
