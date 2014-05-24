@@ -19,6 +19,7 @@ except:
 	
 class PlayerHandler:
 	def setSpeed(self,speed): pass
+	def setVolume(self,speed): pass
 	def player(self): return None
 	def getOutFile(self,text): raise Exception('Not Implemented')
 	def play(self): raise Exception('Not Implemented')
