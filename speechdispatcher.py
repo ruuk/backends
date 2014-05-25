@@ -71,8 +71,6 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
 		if module: self.speechdObject.set_output_module(module)
 		voice = self.setting('voice')
 		if voice: self.speechdObject.set_synthesis_voice(voice)
-		print self.setting('speed')
-		print self.setting('pitch')
 		self.speechdObject.set_rate(self.setting('speed'))
 		self.speechdObject.set_pitch(self.setting('pitch'))
 		self.speechdObject.set_volume( (self.setting('volume') * 2) - 100 ) #Covert from % to (-100 to 100)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import audio
 import base
-import urllib, urllib2, socket
+import urllib, urllib2
 from lib import util
 import shutil
 
@@ -26,8 +26,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 	}
 
 	def __init__(self):
-		preferred = self.setting('player') or None
-		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=preferred)
+		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'))
 		base.SimpleTTSBackendBase.__init__(self,player,mode=self.getMode())
 		self.baseUpdate()
 		self.process = None

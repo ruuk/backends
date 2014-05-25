@@ -1,7 +1,13 @@
-import random
-
 from ctypes import windll, c_buffer
 
+ID_COUNTER = 0
+
+def idCounter():
+	global ID_COUNTER
+	ID_COUNTER += 1
+	if ID_COUNTER > 65535: ID_COUNTER = 1
+	return ID_COUNTER
+	
 class _mci:
     def __init__(self):
         self.w32mci = windll.winmm.mciSendStringA
@@ -32,7 +38,7 @@ class AudioClip(object):
     def __init__(self, filename):
         filename = filename.replace('/', '\\')
         self.filename = filename
-        self._alias = 'mp3_%s' % str(random.random())
+        self._alias = 'mp3_%s' % str(idCounter())
 
         self._mci = _mci()
 

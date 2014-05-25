@@ -23,8 +23,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 	}
 
 	def __init__(self):
-		preferred = self.setting('player') or None
-		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=preferred)
+		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'))
 		base.SimpleTTSBackendBase.__init__(self,player,self.getMode())
 		self.baseUpdate()
 		self.process = None

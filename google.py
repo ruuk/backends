@@ -53,7 +53,7 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 	def __init__(self):
 		self.process = None
 		preferred = self.setting('player') or 'mpg123'
-		player = audio.MP3Player(preferred=preferred)
+		player = audio.MP3AudioPlayerHandler(preferred=preferred)
 		base.SimpleTTSBackendBase.__init__(self,player,mode=base.SimpleTTSBackendBase.WAVOUT)
 		self.update()
 
@@ -107,4 +107,4 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 
 	@staticmethod
 	def available():
-		return audio.MP3Player.canPlay()
+		return audio.MP3AudioPlayerHandler.canPlay()

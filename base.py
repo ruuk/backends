@@ -323,7 +323,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 		
 	def players(self):
 		ret = []
-		for p in self.player.players():
+		for p in self.player.getAvailablePlayers():
 			ret.append((p.ID,p.name))
 		return ret
 

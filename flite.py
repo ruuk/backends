@@ -17,7 +17,7 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 	onATV2 = util.isATV2()
 	
 	def __init__(self):
-		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred=self.setting('player'))
+		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'))
 		base.SimpleTTSBackendBase.__init__(self,player, self.getMode())
 		self.process = None
 		self.update()

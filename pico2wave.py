@@ -17,8 +17,7 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 	}
 
 	def __init__(self):
-		preferred = self.setting('player') or None
-		player = audio.WavPlayer(audio.UnixExternalPlayerHandler,preferred,True)
+		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'),advanced=True)
 		base.SimpleTTSBackendBase.__init__(self,player)
 		self.update()
 		

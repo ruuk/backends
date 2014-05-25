@@ -8,14 +8,15 @@ import asyncconnections
 
 class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'speechutil'
-	displayName = 'SPEECHUTIL.COM'
+	displayName = 'speechutil.com'
 	ttsURL = 'http://speechutil.com/convert/wav?text={0}'
+	headers = { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36' }
 	canStreamWav = True
 	interval = 100
 	
 	def __init__(self):
 		self.process = None
-		player = audio.WavPlayer(audio.UnixExternalPlayerHandler)
+		player = audio.WavAudioPlayerHandler()
 		base.SimpleTTSBackendBase.__init__(self,player,mode=base.SimpleTTSBackendBase.WAVOUT)
 
 	def threadedSay(self,text):
@@ -30,7 +31,7 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
 		h = asyncconnections.Handler()
 		o = urllib2.build_opener(h)
 		url = self.ttsURL.format(urllib.quote(text.encode('utf-8')))
-		req = urllib2.Request(url, headers={ 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36' })
+		req = urllib2.Request(url, headers=self.headers)
 		try:
 			resp = o.open(req)
 		except (asyncconnections.StopRequestedException, asyncconnections.AbortRequestedException):
@@ -53,4 +54,4 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
 		
 	@staticmethod
 	def available():
-		return audio.WavPlayer.canPlay()
+		return audio.WavAudioPlayerHandler.canPlay()
