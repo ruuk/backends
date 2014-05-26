@@ -3,7 +3,7 @@ import time, threading, Queue, os
 from lib import util
 import audio
 
-class TTSBackendBase:
+class TTSBackendBase(object):
 	"""The base class for all speech engine backends
 		
 	Subclasses must at least implement the say() method, and can use whatever

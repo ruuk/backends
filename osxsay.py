@@ -17,7 +17,7 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 	def __new__(cls):
 		try:
 			import xbmc #analysis:ignore
-			return cls()
+			return super(OSXSayTTSBackend, cls).__new__(cls)
 		except:
 			pass
 		return OSXSayTTSBackend_SubProcess()
