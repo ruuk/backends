@@ -1,4 +1,4 @@
-import socket, urllib2, httplib, select, time, xbmc
+import socket, urllib2, httplib, select, time
 
 from lib import util
 
@@ -43,7 +43,7 @@ class _AsyncHTTPResponse(httplib.HTTPResponse):
 					break
 				## <--- Right here, check to see whether thread has requested to stop
 				##	  Also check to see whether timeout has elapsed
-				if xbmc.abortRequested:
+				if util.abortRequested():
 					if DEBUG: util.LOG(' -- XBMC requested abort during wait for server response: raising exception -- ')
 					raise AbortRequestedException('httplib.HTTPResponse._read_status')
 				elif STOP_REQUESTED:
@@ -90,7 +90,7 @@ Handler = _Handler
 #	return handler
 
 def checkStop():
-	if xbmc.abortRequested:
+	if util.abortRequested():
 		if DEBUG: util.LOG(' -- XBMC requested abort during wait for connection to server: raising exception -- ')
 		raise AbortRequestedException('socket[asyncconnections].create_connection')
 	elif STOP_REQUESTED:
