@@ -151,16 +151,14 @@ def _create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_a
 OLD_socket_create_connection = socket.create_connection
 
 def setEnabled(enable=True):
+	global OLD_socket_create_connection, AsyncHTTPResponse, Handler
 	if enable:
 		if DEBUG: util.LOG('Asynchronous connections: Enabled')
-		global OLD_socket_create_connection, AsyncHTTPResponse, Handler
-		
 		socket.create_connection = create_connection
 		AsyncHTTPResponse = _AsyncHTTPResponse
 		Handler = _Handler
 	else:
 		if DEBUG: util.LOG('Asynchronous connections: Disabled')
-		global AsyncHTTPResponse, Handler
 		AsyncHTTPResponse = httplib.HTTPResponse
 		Handler = urllib2.HTTPHandler
 		if OLD_socket_create_connection: socket.create_connection = OLD_socket_create_connection
