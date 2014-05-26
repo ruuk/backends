@@ -264,7 +264,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 		self.mode = None
 		self._simpleIsSpeaking = False
 		self.setMode(mode)
-		self.player = player or audio.WavPlayer()
+		self.player = player or audio.WavAudioPlayerHandler()
 		self.threadedInit()
 	
 	def setMode(self,mode):

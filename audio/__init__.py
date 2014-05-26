@@ -227,6 +227,32 @@ class PaplayAudioPlayer(SubprocessAudioPlayer):
 			args[args.index(None)] = str(int(65536 * (10**(self.volume/20.0)))) #Convert dB to paplay value
 		return args
 
+class AfplayPlayer(SubprocessAudioPlayer): #OSX
+	ID = 'afplay'
+	name = 'afplay'
+	_availableArgs = ('afplay','-h')
+	_playArgs = ('afplay',None)
+	_speedArgs = ('-r',None)
+	_volumeArgs = ('-v',None)
+	kill = True
+	types = ('wav','mp3')
+
+	def setVolume(self,volume):
+		self.volume = min(int(100 * (10**(volume/20.0))),100) #Convert dB to percent
+		
+	def setSpeed(self,speed):
+		self.speed = speed * 0.01
+		
+	def playArgs(self,path):
+		args = self.baseArgs(path)
+		if self.volume:
+			args.extend(self._volumeArgs)
+			args[args.index(None)] = str(self.volume)
+		if self.speed:
+			args.extend(self._speedArgs)
+			args[args.index(None)] = str(self.speed)
+		return args
+		
 class SOXAudioPlayer(SubprocessAudioPlayer):
 	ID = 'sox'
 	name = 'SOX'
@@ -240,10 +266,10 @@ class SOXAudioPlayer(SubprocessAudioPlayer):
 
 	def playArgs(self,path):
 		args = self.baseArgs(path)
-		if self.volume and self._volumeArgs:
+		if self.volume:
 			args.extend(self._volumeArgs)
 			args[args.index(None)] = str(self.volume)
-		if self.speed and self._speedArgs:
+		if self.speed:
 			args.extend(self._speedArgs)
 			args[args.index(None)] = self.speedArg(self.speed)
 		return args
@@ -315,7 +341,7 @@ class BasePlayerHandler:
 		if not os.path.exists(self.outDir): os.makedirs(self.outDir)
 		
 class WavAudioPlayerHandler(BasePlayerHandler):
-	players = (PlaySFXAudioPlayer,PlaySFXAudioPlayer_Legacy,WindowsAudioPlayer,SOXAudioPlayer,PaplayAudioPlayer,AplayAudioPlayer,MPlayerAudioPlayer)
+	players = (PlaySFXAudioPlayer,PlaySFXAudioPlayer_Legacy,WindowsAudioPlayer,AfplayPlayer,SOXAudioPlayer,PaplayAudioPlayer,AplayAudioPlayer,MPlayerAudioPlayer)
 	def __init__(self,preferred=None,advanced=False):
 		self.preferred = False
 		self.advanced = advanced
@@ -411,7 +437,7 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 		return False
 
 class MP3AudioPlayerHandler(WavAudioPlayerHandler):
-	players = (WindowsAudioPlayer,SOXAudioPlayer,Mpg123AudioPlayer,Mpg321AudioPlayer,MPlayerAudioPlayer)
+	players = (WindowsAudioPlayer,AfplayPlayer,SOXAudioPlayer,Mpg123AudioPlayer,Mpg321AudioPlayer,MPlayerAudioPlayer)
 	def __init__(self,*args,**kwargs):
 		WavAudioPlayerHandler.__init__(self,*args,**kwargs)
 		self.outFile = os.path.join(self.outDir,'speech.mp3')

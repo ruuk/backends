@@ -33,15 +33,26 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 		self.startupinfo = getStartupInfo()
 		self.update()
 		self.process = None
+		self.restartProcess()
 
-	def runCommandAndSpeak(self,text):
+	def restartProcess(self):
+		self.stopProcess()
 		args = ['swift']
 		if self.useAOSS: args.insert(0,'aoss')
 		if self.voice: args.extend(('-n',self.voice))
 		args.extend(('-p','audio/volume={0},speech/rate={1},speech/pitch/shift={2}'.format(self.volume,self.rate,self.pitch)))
-		args.append(text.encode('utf-8'))
-		self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-		while self.process.poll() == None and self.active: util.sleep(10)	
+		args.extend(('-f','-'))
+		self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdin=subprocess.PIPE, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		
+	def stopProcess(self):
+		if self.process:
+			try:
+				self.process.terminate()
+			except:
+				pass
+
+	def runCommandAndSpeak(self,text):
+		self.process.stdin.write(text + '\n\n')
 
 	def update(self):
 		self.voice = self.setting('voice')
@@ -56,11 +67,10 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 		self.pitch = 0.4 + ((pitch+6)/20.0) * 2 #Convert from (-6 to +14) value to (0.4 to 2.4)
 
 	def stop(self):
-		if not self.process: return
-		try:
-			self.process.terminate()
-		except:
-			pass
+		self.restartProcess()
+			
+	def close(self):
+		self.stopProcess()
 	
 	@classmethod
 	def getVoiceLines(cls):
