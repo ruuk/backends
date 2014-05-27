@@ -14,9 +14,8 @@ try:
 	voidWav = os.path.join(xbmc.translatePath(util.xbmcaddon.Addon().getAddonInfo('path')).decode('utf-8'),'resources','wavs','void.wav')
 	xbmc.playSFX(voidWav,False)
 	PLAYSFX_HAS_USECACHED = True
-	util.LOG('playSFX() has useCached')
 except:
-	util.LOG('playSFX() does NOT have useCached')
+	pass
 	
 class AudioPlayer:
 	ID = ''
