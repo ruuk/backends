@@ -32,6 +32,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		args = ['espeak','-w',outFile]
 		if self.voice: args += ['-v',self.voice]
 		if self.speed: args += ['-s',str(self.speed)]
+		if self.volume != 100: args.extend(('-a',str(self.volume)))
 		args.append(text.encode('utf-8'))
 		subprocess.call(args)
 		return True
@@ -49,7 +50,6 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		volume = self.setting('volume')
-		self.setVolume(volume)
 		self.volume = int(round(100 * (10**(volume/20.0)))) #convert from dB to percent
 		
 	def update(self):

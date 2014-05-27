@@ -18,6 +18,8 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 					'voice.SAPI':	None,
 					'voice.Cepstral':	None,
 					'speed':	0,
+					'remote_volume': 0,
+					'player_volume': 0,
 					'host':		'127.0.0.1',
 					'port':		8256,
 					'player':	None,
@@ -40,6 +42,12 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 		else:
 			self.httphost = 'http://127.0.0.1:8256/'
 		
+	def updatePostdata(self,postdata):
+		if self.engine: postdata['engine'] = self.engine
+		if self.voice: postdata['voice'] = self.voice
+		if self.speed: postdata['rate'] = self.speed
+		if self.remote_volume: postdata['volume'] = self.remote_volume
+		
 	def runCommand(self,text,outFile):
 		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
 		if self.perlServer:
@@ -47,9 +55,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			postdata['rate'] = self.speed
 			req = urllib2.Request(self.httphost + 'speak.wav', urllib.urlencode(postdata))
 		else:
-			if self.engine: postdata['engine'] = self.engine
-			if self.voice: postdata['voice'] = self.voice
-			if self.speed is not None: postdata['rate'] = self.speed
+			self.updatePostdata(postdata)
 			req = urllib2.Request(self.httphost + 'wav', urllib.urlencode(postdata))
 		with open(outFile, "w") as wav:
 			try:
@@ -66,9 +72,7 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 
 	def runCommandAndSpeak(self,text):
 		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
-		if self.engine: postdata['engine'] = self.engine
-		if self.voice: postdata['voice'] = self.voice
-		if self.speed is not None: postdata['rate'] = self.speed
+		self.updatePostdata(postdata)
 		req = urllib2.Request(self.httphost + 'say', urllib.urlencode(postdata))
 		try:
 			urllib2.urlopen(req)
@@ -108,6 +112,9 @@ class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
 			if voice: voice = '{0}.{1}'.format(self.engine,voice)
 			self.voice = voice
 		self.speed = self.setting('speed')
+		self.setSpeed(self.speed)
+		self.remote_volume = self.setting('remote_volume')
+		self.setVolume(self.setting('player_volume'))
 		
 	def getVersion(self):
 		req = urllib2.Request(self.httphost + 'version')
