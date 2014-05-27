@@ -5,7 +5,7 @@ import urllib, urllib2
 from lib import util
 import shutil
 
-class SJHttsdTTSBackend(base.SimpleTTSBackendBase):
+class SpeechServerBackend(base.SimpleTTSBackendBase):
 	provider = 'ttsd'
 	displayName = 'HTTP TTS Server (Requires Running Server)'
 	interval = 100

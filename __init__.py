@@ -14,12 +14,12 @@ from sapi import SAPITTSBackend
 from espeak import ESpeakTTSBackend, ESpeakCtypesTTSBackend
 from speechdispatcher import SpeechDispatcherTTSBackend
 from jaws import JAWSTTSBackend
-from sjhttsd import SJHttsdTTSBackend
+from speech_server import SpeechServerBackend
 from cepstral import CepstralTTSBackend
 from google import GoogleTTSBackend
 from speechutil import SpeechUtilComTTSBackend
 
-backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,ESpeakTTSBackend,FliteTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,CepstralTTSBackend,SpeechDispatcherTTSBackend,OSXSayTTSBackend,SJHttsdTTSBackend,GoogleTTSBackend,SpeechUtilComTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
+backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,ESpeakTTSBackend,FliteTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,CepstralTTSBackend,SpeechDispatcherTTSBackend,OSXSayTTSBackend,SpeechServerBackend,GoogleTTSBackend,SpeechUtilComTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
 
 def removeBackendsByProvider(to_remove):
 	rem = []
