@@ -11,18 +11,19 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 	interval = 100
 	canStreamWav = False
 	
-	settings = {	'engine':	None,
-					'voice':	None,
-					'voice.Flite':	None,
-					'voice.eSpeak':	None,
-					'voice.SAPI':	None,
-					'voice.Cepstral':	None,
-					'speed':	0,
+	settings = {	'engine': None,
+					'voice': None,
+					'voice.Flite': None,
+					'voice.eSpeak': None,
+					'voice.SAPI': None,
+					'voice.Cepstral': None,
+					'remote_speed': 0,
+					'player_speed': 0,
 					'remote_volume': 0,
 					'player_volume': 0,
-					'host':		'127.0.0.1',
-					'port':		8256,
-					'player':	None,
+					'host':	 '127.0.0.1',
+					'port':	 8256,
+					'player': None,
 					'perl_server': True,
 					'speak_on_server': False
 	}
@@ -45,7 +46,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 	def updatePostdata(self,postdata):
 		if self.engine: postdata['engine'] = self.engine
 		if self.voice: postdata['voice'] = self.voice
-		if self.speed: postdata['rate'] = self.speed
+		if self.remote_speed: postdata['rate'] = self.remote_speed
 		if self.remote_volume: postdata['volume'] = self.remote_volume
 		
 	def runCommand(self,text,outFile):
@@ -64,7 +65,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 				shutil.copyfileobj(res,wav)
 				self.failFlag = False
 			except:
-				util.ERROR('SJHttsdTTSBackend: wav.write',hide_tb=True)
+				util.ERROR('SpeechServerBackend: wav.write',hide_tb=True)
 				if self.failFlag: self.dead = True #This is the second fail in a row, mark dead
 				self.failFlag = True
 				return False
@@ -78,7 +79,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			urllib2.urlopen(req)
 			self.failFlag = False
 		except:
-			util.ERROR('SJHttsdTTSBackend: say',hide_tb=True)
+			util.ERROR('SpeechServerBackend: say',hide_tb=True)
 			if self.failFlag: self.dead = True #This is the second fail in a row, mark dead
 			self.failFlag = True
 			return False
@@ -111,8 +112,8 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			voice = self.setting('voice.{0}'.format(self.engine))
 			if voice: voice = '{0}.{1}'.format(self.engine,voice)
 			self.voice = voice
-		self.speed = self.setting('speed')
-		self.setSpeed(self.speed)
+		self.remote_speed = self.setting('remote_speed')
+		self.setSpeed(self.setting('player_speed'))
 		self.remote_volume = self.setting('remote_volume')
 		self.setVolume(self.setting('player_volume'))
 		
@@ -135,7 +136,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 		try:
 			urllib2.urlopen(req)
 		except:
-			util.ERROR('SJHttsdTTSBackend: stop',hide_tb=True)
+			util.ERROR('SpeechServerBackend: stop',hide_tb=True)
 
 	def stop(self):
 		if self.serverMode: self.serverStop()
@@ -152,7 +153,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 		except urllib2.HTTPError:
 			return None
 		except:
-			util.ERROR('SJHttsdTTSBackend: voices',hide_tb=True)
+			util.ERROR('SpeechServerBackend: voices',hide_tb=True)
 			self.failFlag = True
 			return None
 
@@ -165,7 +166,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			except urllib2.HTTPError:
 				return None
 			except:
-				util.ERROR('SJHttsdTTSBackend: engines',hide_tb=True)
+				util.ERROR('SpeechServerBackend: engines',hide_tb=True)
 				self.failFlag = True
 				return None
 				
