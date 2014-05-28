@@ -16,9 +16,8 @@ class TTSBackendBase(object):
 	canStreamWav = False
 	interval = 400
 	broken = False
-	speedMin = 0
-	speedMax = 0
-	speedMid = 0
+	speedConstraints = (0,0,0,True)
+	pitchConstraints = (0,0,0,True)
 	speedInt = True
 	_loadedSettings = {}
 	dead = False #Backend should flag this true if it's no longer usable
@@ -30,22 +29,44 @@ class TTSBackendBase(object):
 	def __exit__(self,exc_type,exc_value,traceback):
 		self._close()
 		
-	def scaleSpeed(self,target): #Target is between -20 and 20
-		if not self.speedMax: return target
-		if target < 0:
-			adj = self.speedMid - self.speedMin
-			scale = (20 + target) / 20.0
-			new = scale * adj
-			new += self.speedMin
-		elif target > 0:
-			adj = self.speedMax - self.speedMid
-			scale = target/20.0
-			new = scale * adj
-			new += self.speedMid
-		else:
-			new = self.speedMid
+	def scaleSpeed(self,value,limit): #Target is between -20 and 20
+		return self.scaleValue(value,self.speedConstraints,limit)
+		
+	def scalePitch(self,value,limit): #Target is between -20 and 20
+		return self.scaleValue(value,self.pitchConstraints,limit)
 	
-		if self.speedInt: return int(new)
+#	def scaleValue(self,value,constraints,source):
+#		if target < 0:
+#			adj = self.speedMid - self.speedMin
+#			scale = (20 + target) / 20.0
+#			new = scale * adj
+#			new += self.speedMin
+#		elif target > 0:
+#			adj = self.speedMax - self.speedMid
+#			scale = target/20.0
+#			new = scale * adj
+#			new += self.speedMid
+#		else:
+#			new = self.speedMid
+#	
+#		if self.speedInt: return int(new)
+#		return new
+		
+	def scaleValue(self,value,constraints,limit):
+		if value < 0:
+			adj = constraints[1] - constraints[0]
+			scale = (limit + value) / float(limit)
+			new = scale * adj
+			new += constraints[0]
+		elif value > 0:
+			adj = constraints[3] - constraints[2]
+			scale = value/float(limit)
+			new = scale * adj
+			new += constraints[2]
+		else:
+			new = constraints[2]
+	
+		if constraints[3]: return int(new)
 		return new
 	
 	def say(self,text,interrupt=False):

@@ -12,11 +12,11 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'eSpeak'
 	displayName = 'eSpeak'
 	interval = 100
-	speedMin = 80
-	speedMax = 450
-	speedMid = 175
+	speedConstraints = (80,175,450,True)
+	pitchConstraints = (0,50,99,True)
 	settings = {	'voice':'',
 					'speed':0,
+					'pitch':0,
 					'output_via_espeak':False,
 					'player':None,
 					'volume':0
@@ -32,6 +32,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		args = ['espeak','-w',outFile]
 		if self.voice: args += ['-v',self.voice]
 		if self.speed: args += ['-s',str(self.speed)]
+		if self.pitch: args += ['-p',str(self.pitch)]
 		if self.volume != 100: args.extend(('-a',str(self.volume)))
 		args.append(text.encode('utf-8'))
 		subprocess.call(args)
@@ -41,6 +42,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		args = ['espeak']
 		if self.voice: args.extend(('-v',self.voice))
 		if self.speed: args.extend(('-s',str(self.speed)))
+		if self.pitch: args += ['-p',str(self.pitch)]
 		if self.volume != 100: args.extend(('-a',str(self.volume)))
 		args.append(text.encode('utf-8'))
 		self.process = subprocess.Popen(args)
@@ -49,6 +51,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 	def baseUpdate(self):
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
+		self.pitch = self.setting('pitch')
 		volume = self.setting('volume')
 		self.volume = int(round(100 * (10**(volume/20.0)))) #convert from dB to percent
 		

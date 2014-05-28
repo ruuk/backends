@@ -10,14 +10,11 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	settings = {	'voice':'',
 					'speed':0,
 					'volume':100
-	
 	}
 	canStreamWav = True
 	interval = 100
-	speedMin = -10
-	speedMax = 10
-	speedMid = 0
-	
+	speedConstraints = (-10,0,10,True)
+
 	baseSSML = u'''<?xml version="1.0"?>
 <speak version="1.0"
          xmlns="http://www.w3.org/2001/10/synthesis"
