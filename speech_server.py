@@ -19,6 +19,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 					'voice.Cepstral': None,
 					'remote_speed': 0,
 					'player_speed': 0,
+					'remote_pitch': 0,
 					'remote_volume': 0,
 					'player_volume': 0,
 					'host':	 '127.0.0.1',
@@ -44,11 +45,11 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			self.httphost = 'http://127.0.0.1:8256/'
 		
 	def updatePostdata(self,postdata):
-		if self.engine: postdata['engine'] = self.engine
+		postdata['engine'] = self.engine
 		if self.voice: postdata['voice'] = self.voice
-		if self.remote_speed: postdata['rate'] = self.remote_speed
-		if self.remote_pitch: postdata['pitch'] = self.remote_pitch
-		if self.remote_volume: postdata['volume'] = self.remote_volume
+		postdata['rate'] = self.remote_speed
+		postdata['pitch'] = self.remote_pitch
+		postdata['volume'] = self.remote_volume
 		
 	def runCommand(self,text,outFile):
 		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
@@ -128,10 +129,9 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			return ''
 
 	def update(self):
-		self.baseUpdate()
-		
 		self.setPlayer(self.setting('player'))
 		self.setMode(self.getMode())
+		self.baseUpdate()
 		
 	def serverStop(self):
 		req = urllib2.Request(self.httphost + 'stop', '')
