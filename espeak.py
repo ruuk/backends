@@ -42,7 +42,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		args = ['espeak']
 		if self.voice: args.extend(('-v',self.voice))
 		if self.speed: args.extend(('-s',str(self.speed)))
-		if self.pitch: args += ['-p',str(self.pitch)]
+		if self.pitch: args.extend(('-p',str(self.pitch)))
 		if self.volume != 100: args.extend(('-a',str(self.volume)))
 		args.append(text.encode('utf-8'))
 		self.process = subprocess.Popen(args)

@@ -59,12 +59,12 @@ class TTSBackendBase(object):
 			new = scale * adj
 			new += constraints[0]
 		elif value > 0:
-			adj = constraints[3] - constraints[2]
+			adj = constraints[2] - constraints[1]
 			scale = value/float(limit)
 			new = scale * adj
-			new += constraints[2]
+			new += constraints[1]
 		else:
-			new = constraints[2]
+			new = constraints[1]
 	
 		if constraints[3]: return int(new)
 		return new

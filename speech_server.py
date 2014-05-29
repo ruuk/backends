@@ -47,6 +47,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 		if self.engine: postdata['engine'] = self.engine
 		if self.voice: postdata['voice'] = self.voice
 		if self.remote_speed: postdata['rate'] = self.remote_speed
+		if self.remote_pitch: postdata['pitch'] = self.remote_pitch
 		if self.remote_volume: postdata['volume'] = self.remote_volume
 		
 	def runCommand(self,text,outFile):
@@ -112,6 +113,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			voice = self.setting('voice.{0}'.format(self.engine))
 			if voice: voice = '{0}.{1}'.format(self.engine,voice)
 			self.voice = voice
+		self.remote_pitch = self.setting('remote_pitch')
 		self.remote_speed = self.setting('remote_speed')
 		self.setSpeed(self.setting('player_speed'))
 		self.remote_volume = self.setting('remote_volume')
