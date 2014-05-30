@@ -5,6 +5,8 @@ from base import SimpleTTSBackendBase
 class FestivalTTSBackend(SimpleTTSBackendBase):
 	provider = 'Festival'
 	displayName = 'Festival'
+	speedConstraints = (0.4,1,1.8,False)
+	pitchConstraints = (50,105,500,True)
 	settings = {	'voice':'',
 					'volume':0,
 					'speed':0,
