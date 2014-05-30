@@ -1,54 +1,46 @@
 # -*- coding: utf-8 -*-
 import os, subprocess
-from base import TTSBackendBase
+from base import SimpleTTSBackendBase
 
-class FestivalTTSBackend(TTSBackendBase):
+class FestivalTTSBackend(SimpleTTSBackendBase):
 	provider = 'Festival'
 	displayName = 'Festival'
 	settings = {	'voice':'',
 					'volume':0,
 					'speed':0,
+					'pitch':105,
+					'player':None
 	}
 	
 	def __init__(self):
+		SimpleTTSBackendBase.__init__(self)
 		self.update()
-		self.startFestivalProcess()
-		self._isSpeaking = False
+		self.festivalProcess = None
 		
-	def startFestivalProcess(self):
-		#LOG('Starting Festival...')
-		#self.festivalProcess = subprocess.Popen(['festival'],shell=True,stdin=subprocess.PIPE)
-		pass
-		
-	def say(self,text,interrupt=False):
+	def runCommand(self,text,outFile):
 		if not text: return
-		self._isSpeaking = True
-		##self.festivalProcess.send_signal(signal.SIGINT)
-		#self.festivalProcess = subprocess.Popen(['festival'],shell=True,stdin=subprocess.PIPE)
-		voice = ''
-		durMult = ''
-		if self.voice: voice = '(voice_{0})\n'.format(self.voice)
-		if self.durationMultiplier: durMult = "(Parameter.set 'Duration_Stretch {0})\n".format(self.durationMultiplier)
-		self.festivalProcess = subprocess.Popen(['festival','--pipe'],shell=True,stdin=subprocess.PIPE)
-		out = '{0}{1}(utt.play (utt.wave.rescale (SynthText "{2}") {3:.2f} nil))\n'.format(voice,durMult,text.encode('utf-8'),self.volume)
+		voice = self.voice and '(voice_{0})'.format(self.voice) or ''
+		durMult = self.durationMultiplier and "(Parameter.set 'Duration_Stretch {0})".format(self.durationMultiplier) or ''
+		pitch = self.pitch != 105 and "(require 'prosody-param)(set-pitch {0})".format(self.pitch) or ''
+		self.festivalProcess = subprocess.Popen(['festival','--pipe'],stdin=subprocess.PIPE)
+		out = '(audio_mode \'async){0}{1}{2}(utt.save.wave (utt.wave.rescale (SynthText "{3}") {4:.2f} nil)"{5}")\n'.format(voice,durMult,pitch,text.encode('utf-8'),self.volume,outFile)
 		self.festivalProcess.communicate(out)
-		#if self.festivalProcess.poll() != None: self.startFestivalProcess()
-		self._isSpeaking = False
-		
-	def isSpeaking(self):
-		return self._isSpeaking
+		return True
 		
 	def update(self):
+		self.setPlayer(self.setting('player'))
 		self.voice = self.setting('voice')
 		volume = self.setting('volume')
 		self.volume = 1 * (10**(volume/20.0)) #convert from dB to percent
 		speed = self.setting('speed')
 		self.durationMultiplier = 1.8 - (((speed + 16)/28.0) * 1.4) #Convert from (-16 to +12) value to (1.8 to 0.4)
+		self.pitch = self.setting('pitch')
 
-	def close(self):
-		#if self.festivalProcess.poll() != None: return
-		#self.festivalProcess.terminate()
-		pass
+	def stop(self):
+		try:
+			self.festivalProcess.terminate()
+		except:
+			return
 	
 	@classmethod
 	def settingList(cls,setting,*args):
