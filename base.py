@@ -18,6 +18,7 @@ class TTSBackendBase(object):
 	broken = False
 	speedConstraints = (0,0,0,True)
 	pitchConstraints = (0,0,0,True)
+	volumeConstraints = (-12,0,12,True)
 	speedInt = True
 	_loadedSettings = {}
 	dead = False #Backend should flag this true if it's no longer usable
@@ -35,6 +36,9 @@ class TTSBackendBase(object):
 	def scalePitch(self,value,limit): #Target is between -20 and 20
 		return self.scaleValue(value,self.pitchConstraints,limit)
 	
+	def scaleVolume(self,value,limit):
+		return self.scaleValue(value,self.volumeConstraints,limit)
+
 #	def scaleValue(self,value,constraints,source):
 #		if target < 0:
 #			adj = self.speedMid - self.speedMin
