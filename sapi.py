@@ -9,11 +9,13 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	displayName = 'SAPI (Windows Internal)'
 	settings = {	'voice':'',
 					'speed':0,
+					'pitch':0,
 					'volume':100
 	}
 	canStreamWav = True
 	interval = 100
 	speedConstraints = (-10,0,10,True)
+	pitchConstraints = (-10,0,10,True)
 
 	baseSSML = u'''<?xml version="1.0"?>
 <speak version="1.0"
@@ -22,7 +24,10 @@ class SAPITTSBackend(ThreadedTTSBackend):
          xsi:schemaLocation="http://www.w3.org/2001/10/synthesis
                    http://www.w3.org/TR/speech-synthesis/synthesis.xsd"
          xml:lang="en-US">
-  <p>{0}</p>
+  <volume level="{volume}" />
+  <pitch absmiddle="{pitch}" />
+  <rate absspeed="{speed}" />
+  <p>{text}</p>
 </speak>'''
 	
 	def __init__(self):
@@ -39,7 +44,7 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		
 	def threadedSay(self,text):
 		if not self.SpVoice: return
-		ssml = self.baseSSML.format(saxutils.escape(text))
+		ssml = self.ssml.format(text=saxutils.escape(text))
 		try:
 			self.SpVoice.Speak(ssml,1)
 		except self.COMError:
@@ -68,7 +73,8 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		stream.Format = fmt
 		self.SpVoice.AudioOutputStream = stream
 		
-		self.SpVoice.Speak(text,0)
+		ssml = self.ssml.format(text=saxutils.escape(text))
+		self.SpVoice.Speak(ssml,0)
 		
 		wavIO = StringIO.StringIO()
 		self.createWavFileObject(wavIO,stream)
@@ -111,10 +117,9 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		return ThreadedTTSBackend.isSpeaking(self) or None
 		
 	def update(self):
-		self.speed = self.setting('speed')
-		self.volume = self.setting('volume')
-		self.SpVoice.Rate = self.speed
-		self.SpVoice.Volume = self.volume
+		#self.SpVoice.Rate = self.setting('speed')
+		#self.SpVoice.Volume = self.setting('volume')
+		self.ssml = self.baseSSML.format(text='{text}',volume=self.setting('volume'),speed=self.setting('speed'),pitch=self.setting('pitch'))
 		voice_name = self.setting('voice')
 		if voice_name:
 			v=self.SpVoice.getVoices()

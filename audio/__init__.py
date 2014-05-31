@@ -419,7 +419,11 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 		for f in os.listdir(self.outDir):
 			if f.startswith('.'): continue
 			fpath = os.path.join(self.outDir,f)
-			if os.path.exists(fpath): os.remove(fpath)
+			if os.path.exists(fpath):
+				try:
+					os.remove(fpath)
+				except:
+					util.ERROR('Error Removing File',hide_tb=True)
 		return self._player.close()
 		
 	@classmethod
