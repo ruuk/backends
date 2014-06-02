@@ -55,7 +55,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
 		if self.perlServer:
 			postdata['voice'] = self.voice
-			postdata['rate'] = self.speed
+			postdata['rate'] = self.remote_speed
 			req = urllib2.Request(self.httphost + 'speak.wav', urllib.urlencode(postdata))
 		else:
 			self.updatePostdata(postdata)
@@ -67,8 +67,8 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 				shutil.copyfileobj(res,wav)
 				self.failFlag = False
 			except:
-				util.ERROR('SpeechServerBackend: wav.write',hide_tb=True)
-				if self.failFlag: self.dead = True #This is the second fail in a row, mark dead
+				err = util.ERROR('SpeechServerBackend: wav.write',hide_tb=True)
+				if self.failFlag: self.flagAsDead(reason=err) #This is the second fail in a row, mark dead
 				self.failFlag = True
 				return False
 		return True
@@ -81,8 +81,8 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			urllib2.urlopen(req)
 			self.failFlag = False
 		except:
-			util.ERROR('SpeechServerBackend: say',hide_tb=True)
-			if self.failFlag: self.dead = True #This is the second fail in a row, mark dead
+			err = util.ERROR('SpeechServerBackend: say',hide_tb=True)
+			if self.failFlag: self.flagAsDead(reason=err) #This is the second fail in a row, mark dead
 			self.failFlag = True
 			return False
 	
@@ -102,11 +102,14 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			if self.perlServer:
 				util.LOG('Perl server not detected. Switch to speech.server mode.')
 				self.perlServer = False
-		else:
+		elif version.startswith('perl.server'):
 			if not self.perlServer:
 				util.LOG('speech.server not detected. Switch to Perl server mode.')
 				self.perlServer = True
-				
+		else:
+			util.LOG('No server detected. Flagging as dead.')
+			self.flagAsDead(reason=version)
+			
 		if self.perlServer:
 			self.voice = self.setting('voice')
 		else:
@@ -125,8 +128,13 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 		try:
 			resp = urllib2.urlopen(req)
 			return resp.read()
+		except urllib2.HTTPError, e:
+			if e.code == 404: return 'perl.server'
+			err = util.ERROR('Failed to get speech.server version',hide_tb=True)
+			return err
 		except:
-			return ''
+			err = util.ERROR('Failed to get speech.server version',hide_tb=True)
+			return err
 
 	def update(self):
 		self.setPlayer(self.setting('player'))

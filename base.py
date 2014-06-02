@@ -22,6 +22,7 @@ class TTSBackendBase(object):
 	speedInt = True
 	_loadedSettings = {}
 	dead = False #Backend should flag this true if it's no longer usable
+	deadReason = '' #Backend should set this reason when marking itself dead
 	_closed = False
 
 	def __enter__(self):
@@ -38,23 +39,6 @@ class TTSBackendBase(object):
 	
 	def scaleVolume(self,value,limit):
 		return self.scaleValue(value,self.volumeConstraints,limit)
-
-#	def scaleValue(self,value,constraints,source):
-#		if target < 0:
-#			adj = self.speedMid - self.speedMin
-#			scale = (20 + target) / 20.0
-#			new = scale * adj
-#			new += self.speedMin
-#		elif target > 0:
-#			adj = self.speedMax - self.speedMid
-#			scale = target/20.0
-#			new = scale * adj
-#			new += self.speedMid
-#		else:
-#			new = self.speedMid
-#	
-#		if self.speedInt: return int(new)
-#		return new
 		
 	def scaleValue(self,value,constraints,limit):
 		if value < 0:
@@ -73,6 +57,10 @@ class TTSBackendBase(object):
 		if constraints[3]: return int(new)
 		return new
 	
+	def flagAsDead(self,reason=''):
+		self.dead = True
+		self.deadReason = reason or self.deadReason
+		
 	def say(self,text,interrupt=False):
 		"""Method accepting text to be spoken
 		
