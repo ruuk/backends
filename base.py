@@ -268,6 +268,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	ENGINESPEAK = 1
 	PIPE = 2
 	canStreamWav = True
+	playerClass = audio.WavAudioPlayerHandler
 	"""Handles speech engines that output wav files
 
 	Subclasses must at least implement the runCommand() method which should
@@ -277,7 +278,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def __init__(self,player=None,mode=WAVOUT):
 		self.mode = None
 		self._simpleIsSpeaking = False
-		self.player = player or audio.WavAudioPlayerHandler()
+		self.player = player or self.playerClass
 		self.setMode(mode)
 		self.threadedInit()
 	
@@ -352,9 +353,10 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def isSpeaking(self):
 		return self._simpleIsSpeaking or self.player.isPlaying() or ThreadedTTSBackend.isSpeaking(self)
 		
-	def players(self):
+	@classmethod
+	def players(cls):
 		ret = []
-		for p in self.player.getAvailablePlayers():
+		for p in cls.playerClass.getAvailablePlayers():
 			ret.append((p.ID,p.name))
 		return ret
 

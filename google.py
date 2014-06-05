@@ -45,25 +45,33 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 	ttsURL = 'http://translate.google.com/translate_tts?tl={0}&q={1}'
 	canStreamWav = util.commandIsAvailable('mpg123')
 	interval = 100
+	playerClass = audio.MP3AudioPlayerHandler
 	settings = {	'language':'en',
 					'player':None,
-					'volume':0
+					'volume':0,
+					'pipe':False
 	}
 	
 	def __init__(self):
 		self.process = None
 		preferred = self.setting('player') or 'mpg123'
-		player = audio.MP3AudioPlayerHandler(preferred=preferred)
+		player = self.playerClass(preferred=preferred)
 		base.SimpleTTSBackendBase.__init__(self,player,mode=base.SimpleTTSBackendBase.WAVOUT)
 		self.update()
 
 	def threadedSay(self,text):
 		if not text: return
 		sections = textwrap.wrap(text,100)
-		for text in sections:
-			outFile = self.player.getOutFile(text)
-			if not self.runCommand(text,outFile): return
-			self.player.play()
+		if self.mode == self.PIPE:
+			for text in sections:
+				source = self.runCommandAndPipe(text)
+				if not source: continue
+				self.player.pipeAudio(source)
+		else:
+			for text in sections:
+				outFile = self.player.getOutFile(text)
+				if not self.runCommand(text,outFile): return
+				self.player.play()
 
 	def runCommand(self,text,outFile):
 		url = self.ttsURL.format(self.language,urllib.quote(text.encode('utf-8')))
@@ -78,6 +86,16 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 			shutil.copyfileobj(resp,out)
 		return True
 
+	def runCommandAndPipe(self,text):
+		url = self.ttsURL.format(self.language,urllib.quote(text.encode('utf-8')))
+		req = urllib2.Request(url, headers={ 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36' })
+		try:
+			resp = urllib2.urlopen(req)
+		except:
+			util.ERROR('Failed to open Google TTS URL',hide_tb=True)
+			return None
+		return resp
+
 	def getWavStream(self,text):
 		wav_path = os.path.join(util.getTmpfs(),'speech.wav')
 		mp3_path = os.path.join(util.getTmpfs(),'speech.mp3')
@@ -91,7 +109,14 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 		self.language = self.setting('language')
 		self.setPlayer(self.setting('player'))
 		self.setVolume(self.setting('volume'))
+		self.setMode(self.getMode())
 
+	def getMode(self):
+		if self.setting('pipe'):
+			return base.SimpleTTSBackendBase.PIPE
+		else:
+			return base.SimpleTTSBackendBase.WAVOUT
+			
 	def stop(self):
 		if not self.process: return
 		try:

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, sys, subprocess, wave, hashlib, threading
+import os, sys, subprocess, wave, hashlib, threading, shutil, errno
 
 from lib import util
 
@@ -184,9 +184,17 @@ class SubprocessAudioPlayer(AudioPlayer):
 		return bool(self._pipeArgs)
 		
 	def pipe(self,source):
-		self._wavProcess = subprocess.Popen(self._pipeArgs,stdin=source,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-		source.close() #This is to prevent hanging while waiting for input, but I didn't have a problem without it
-		self._wavProcess.communicate()
+		self._wavProcess = subprocess.Popen(self._pipeArgs,stdin=subprocess.PIPE,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		try:
+			shutil.copyfileobj(source,self._wavProcess.stdin)
+		except IOError,e:
+			if e.errno != errno.EPIPE:
+				util.ERROR('Error piping audio',hide_tb=True)
+		except:
+			util.ERROR('Error piping audio',hide_tb=True)
+		source.close()
+		self._wavProcess.stdin.close()
+		while self._wavProcess.poll() == None and self.active: util.sleep(10)
 		
 	def setSpeed(self,speed):
 		self.speed = speed
@@ -246,6 +254,7 @@ class PaplayAudioPlayer(SubprocessAudioPlayer):
 	name = 'paplay'
 	_availableArgs = ('paplay','--version')
 	_playArgs = ('paplay',None)
+	_pipeArgs = ('paplay',)
 	_volumeArgs = ('--volume',None)
 
 	def playArgs(self,path):
@@ -286,6 +295,7 @@ class SOXAudioPlayer(SubprocessAudioPlayer):
 	name = 'SOX'
 	_availableArgs = ('sox','--version')
 	_playArgs = ('play','-q',None)
+	_pipeArgs = ('play','-q','-')
 	_speedArgs = ('tempo','-s',None)
 	_speedMultiplier = 0.01
 	_volumeArgs = ('vol',None,'dB')
@@ -318,6 +328,7 @@ class MPlayerAudioPlayer(SubprocessAudioPlayer):
 	name = 'MPlayer'
 	_availableArgs = ('mplayer','--help')
 	_playArgs = ('mplayer','-really-quiet',None)
+	_pipeArgs = ('mplayer','-','-really-quiet','-cache','8192')
 	_speedArgs = 'scaletempo=scale={0}:speed=none'
 	_speedMultiplier = 0.01
 	_volumeArgs = 'volume={0}'
@@ -340,6 +351,7 @@ class Mpg123AudioPlayer(SubprocessAudioPlayer):
 	name = 'mpg123'
 	_availableArgs = ('mpg123','--version')
 	_playArgs = ('mpg123','-q',None)
+	_pipeArgs = ('mpg123','-q','-')
 	types = ('mp3',)
 
 class Mpg321AudioPlayer(SubprocessAudioPlayer):
@@ -347,6 +359,7 @@ class Mpg321AudioPlayer(SubprocessAudioPlayer):
 	name = 'mpg321'
 	_availableArgs = ('mpg321','--version')
 	_playArgs = ('mpg321','-q',None)
+	_pipeArgs = ('mpg321','-q','-')
 	types = ('mp3',)
 	
 class BasePlayerHandler:

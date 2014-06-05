@@ -74,7 +74,7 @@ def getPlayers(provider):
 	players = None
 	bClass = getBackendByProvider(provider)
 	if bClass and hasattr(bClass,'players'):
-		with bClass() as b: players = b.players()
+		players = bClass.players()
 	return players
 		
 def getBackend(provider='auto'):

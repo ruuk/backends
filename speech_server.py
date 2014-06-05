@@ -26,7 +26,8 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 					'port':	 8256,
 					'player': None,
 					'perl_server': True,
-					'speak_on_server': False
+					'speak_on_server': False,
+					'pipe': False
 	}
 
 	def __init__(self):
@@ -85,13 +86,36 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 			if self.failFlag: self.flagAsDead(reason=err) #This is the second fail in a row, mark dead
 			self.failFlag = True
 			return False
+			
+	def runCommandAndPipe(self,text):
+		postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
+		if self.perlServer:
+			postdata['voice'] = self.voice
+			postdata['rate'] = self.remote_speed
+			req = urllib2.Request(self.httphost + 'speak.wav', urllib.urlencode(postdata))
+		else:
+			self.updatePostdata(postdata)
+			req = urllib2.Request(self.httphost + 'wav', urllib.urlencode(postdata))
+		try:
+			res = urllib2.urlopen(req)
+			if not res.info().get('Content-Type') == 'audio/x-wav': return None
+			self.failFlag = False
+			return res
+		except:
+			err = util.ERROR('SpeechServerBackend: Failed to get wav from server',hide_tb=True)
+			if self.failFlag: self.flagAsDead(reason=err) #This is the second fail in a row, mark dead
+			self.failFlag = True
+			return False
+		return True	
 	
 	def getMode(self):
+		self.serverMode = False
 		if self.setting('speak_on_server'):
 			self.serverMode = True
 			return base.SimpleTTSBackendBase.ENGINESPEAK
+		elif self.setting('pipe'):
+			return base.SimpleTTSBackendBase.PIPE
 		else:
-			self.serverMode = False
 			return base.SimpleTTSBackendBase.WAVOUT
 			
 	def baseUpdate(self):
