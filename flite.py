@@ -36,6 +36,7 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 	def update(self):
 		self.voice = self.setting('voice')
 		self.setMode(self.getMode())
+		self.setPlayer(self.setting('player'))
 		self.setSpeed(self.setting('speed'))
 		self.setVolume(self.setting('volume'))
 

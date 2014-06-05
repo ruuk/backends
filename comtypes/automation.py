@@ -1,38 +1,23 @@
 # comtypes.automation module
+import array
+import datetime
+import decimal
+
 from ctypes import *
 from ctypes import _Pointer
 from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.patcher import Patch
+from comtypes import npsupport
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
     class _safearray(object):
         tagSAFEARRAY = None
 
-import datetime # for VT_DATE, standard in Python 2.3 and up
-import array
-try:
-    import decimal # standard in Python 2.4 and up
-except ImportError:
-    decimal = None
+from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 
-try:
-    from numpy import ndarray
-except ImportError:
-    class ndarray(object):
-        pass
-
-
-
-from ctypes.wintypes import VARIANT_BOOL
-from ctypes.wintypes import WORD
-from ctypes.wintypes import UINT
-from ctypes.wintypes import DWORD
-from ctypes.wintypes import LONG
-
-from ctypes.wintypes import WCHAR
 
 LCID = DWORD
 DISPID = LONG
@@ -118,49 +103,84 @@ VT_ILLEGAL = 65535
 VT_ILLEGALMASKED = 4095
 VT_TYPEMASK = 4095
 
+
 class tagCY(Structure):
     _fields_ = [("int64", c_longlong)]
 CY = tagCY
 CURRENCY = CY
 
+
+class tagDEC(Structure):
+    _fields_ = [("wReserved", c_ushort),
+                ("scale", c_ubyte),
+                ("sign", c_ubyte),
+                ("Hi32", c_ulong),
+                ("Lo64", c_ulonglong)]
+
+    def as_decimal(self):
+        """ Convert a tagDEC struct to Decimal.
+
+        See http://msdn.microsoft.com/en-us/library/cc234586.aspx for the tagDEC
+        specification.
+
+        """
+        digits = (self.Hi32 << 64) + self.Lo64
+        decimal_str = "{0}{1}e-{2}".format(
+            '-' if self.sign else '',
+            digits,
+            self.scale,
+        )
+        return decimal.Decimal(decimal_str)
+
+
+DECIMAL = tagDEC
+
+
 # The VARIANT structure is a good candidate for implementation in a C
 # helper extension.  At least the get/set methods.
 class tagVARIANT(Structure):
-    # The C Header file defn of VARIANT is much more complicated, but
-    # this is the ctypes version - functional as well.
-    class U_VARIANT(Union):
-        class _tagBRECORD(Structure):
-            _fields_ = [("pvRecord", c_void_p),
-                        ("pRecInfo", POINTER(IUnknown))]
-        _fields_ = [
-            ("VT_BOOL", VARIANT_BOOL),
-            ("VT_I1", c_byte),
-            ("VT_I2", c_short),
-            ("VT_I4", c_long),
-            ("VT_I8", c_longlong),
-            ("VT_INT", c_int),
-            ("VT_UI1", c_ubyte),
-            ("VT_UI2", c_ushort),
-            ("VT_UI4", c_ulong),
-            ("VT_UI8", c_ulonglong),
-            ("VT_UINT", c_uint),
-            ("VT_R4", c_float),
-            ("VT_R8", c_double),
-            ("VT_CY", c_longlong),
-            ("c_wchar_p", c_wchar_p),
-            ("c_void_p", c_void_p),
-            ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
+    class U_VARIANT1(Union):
+        class __tagVARIANT(Structure):
+            # The C Header file defn of VARIANT is much more complicated, but
+            # this is the ctypes version - functional as well.
+            class U_VARIANT2(Union):
+                class _tagBRECORD(Structure):
+                    _fields_ = [("pvRecord", c_void_p),
+                                ("pRecInfo", POINTER(IUnknown))]
+                _fields_ = [
+                    ("VT_BOOL", VARIANT_BOOL),
+                    ("VT_I1", c_byte),
+                    ("VT_I2", c_short),
+                    ("VT_I4", c_long),
+                    ("VT_I8", c_longlong),
+                    ("VT_INT", c_int),
+                    ("VT_UI1", c_ubyte),
+                    ("VT_UI2", c_ushort),
+                    ("VT_UI4", c_ulong),
+                    ("VT_UI8", c_ulonglong),
+                    ("VT_UINT", c_uint),
+                    ("VT_R4", c_float),
+                    ("VT_R8", c_double),
+                    ("VT_CY", c_longlong),
+                    ("c_wchar_p", c_wchar_p),
+                    ("c_void_p", c_void_p),
+                    ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
 
-            ("bstrVal", BSTR),
-            ("_tagBRECORD", _tagBRECORD),
+                    ("bstrVal", BSTR),
+                    ("_tagBRECORD", _tagBRECORD),
+                    ]
+                _anonymous_ = ["_tagBRECORD"]
+            _fields_ = [("vt", VARTYPE),
+                        ("wReserved1", c_ushort),
+                        ("wReserved2", c_ushort),
+                        ("wReserved3", c_ushort),
+                        ("_", U_VARIANT2)
             ]
-        _anonymous_ = ["_tagBRECORD"]
-    _fields_ = [("vt", VARTYPE),
-                ("wReserved1", c_ushort),
-                ("wReserved2", c_ushort),
-                ("wReserved3", c_ushort),
-                ("_", U_VARIANT)
-    ]
+        _fields_ = [("__VARIANT_NAME_2", __tagVARIANT),
+                    ("decVal", DECIMAL)]
+        _anonymous_ = ["__VARIANT_NAME_2"]
+    _fields_ = [("__VARIANT_NAME_1", U_VARIANT1)]
+    _anonymous_ = ["__VARIANT_NAME_1"]
 
     def __init__(self, *args):
         if args:
@@ -197,6 +217,8 @@ class tagVARIANT(Structure):
     def _set_value(self, value):
         _VariantClear(self)
         if value is None:
+            self.vt = VT_NULL
+        elif hasattr(value, '__len__') and len(value) == 0:
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
         # the check for int
@@ -251,6 +273,11 @@ class tagVARIANT(Structure):
             com_days = delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.
             self.vt = VT_DATE
             self._.VT_R8 = com_days
+        elif npsupport.isdatetime64(value):
+            com_days = value - npsupport.com_null_date64
+            com_days /= npsupport.numpy.timedelta64(1, 'D')
+            self.vt = VT_DATE
+            self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):
             self._.VT_CY = int(round(value * 10000))
             self.vt = VT_CY
@@ -270,18 +297,15 @@ class tagVARIANT(Structure):
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
-        elif isinstance(value, ndarray):
-            # Get the array type. This only works if we have a simple
-            # array.
+        elif npsupport.isndarray(value):
+            # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
-            import numpy.ctypeslib
-            try:
-                typ = numpy.ctypeslib._typecodes[descr]
-            except KeyError:
-                msg = ('Cannot make safe array out of object of type '
-                       '"%s"' % descr)
-                raise ValueError(msg)
-            obj = _midlSAFEARRAY(typ).create(value)
+            typ = npsupport.numpy.ctypeslib._typecodes.get(descr)
+            if typ is None:
+                # Try for variant
+                obj = _midlSAFEARRAY(VARIANT).create(value)
+            else:
+                obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
@@ -320,6 +344,12 @@ class tagVARIANT(Structure):
         elif isinstance(value, c_float):
             self.vt = VT_R4
             self._.VT_R4 = value
+        elif isinstance(value, c_int64):
+            self.vt = VT_I8
+            self._.VT_I8 = value
+        elif isinstance(value, c_uint64):
+            self.vt = VT_UI8
+            self._.VT_UI8 = value
         elif isinstance(value, _byref_type):
             ref = value._obj
             self._.c_void_p = addressof(ref)
@@ -371,10 +401,7 @@ class tagVARIANT(Structure):
             days = self._.VT_R8
             return datetime.timedelta(days=days) + _com_null_date
         elif vt == VT_CY:
-            if decimal is not None:
-                return self._.VT_CY / decimal.Decimal("10000")
-            else:
-                return self._.VT_CY / 10000.
+            return self._.VT_CY / decimal.Decimal("10000")
         elif vt == VT_UNKNOWN:
             val = self._.c_void_p
             if not val:
@@ -386,6 +413,8 @@ class tagVARIANT(Structure):
             # cast doesn't call AddRef (it should, imo!)
             ptr.AddRef()
             return ptr.__ctypes_from_outparam__()
+        elif vt == VT_DECIMAL:
+            return self.decVal.as_decimal()
         elif vt == VT_DISPATCH:
             val = self._.c_void_p
             if not val:
@@ -771,6 +800,7 @@ class IDispatch(IUnknown):
 
     # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
 
+
 ################################################################
 # safearrays
 # XXX Only one-dimensional arrays are currently implemented
@@ -838,6 +868,7 @@ for c, v in _ctype_to_vartype.iteritems():
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 _ctype_to_vartype[c_char] = VT_UI1
+
 
 
 try:

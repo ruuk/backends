@@ -14,12 +14,13 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 	interval = 100
 	speedConstraints = (80,175,450,True)
 	pitchConstraints = (0,50,99,True)
-	settings = {	'voice':'',
+	settings = {		'voice':'',
 					'speed':0,
 					'pitch':0,
 					'output_via_espeak':False,
 					'player':None,
-					'volume':0
+					'volume':0,
+					'pipe':False
 	}
 
 	def __init__(self):
@@ -45,6 +46,10 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		if self.pitch: args.extend(('-p',str(self.pitch)))
 		if self.volume != 100: args.extend(('-a',str(self.volume)))
 		args.append(text.encode('utf-8'))
+		if self.pipe and self.canPipe():
+			args.append('--stdout')
+			self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
+			return self.pipeAudio(self.process)			
 		self.process = subprocess.Popen(args)
 		while self.process.poll() == None and self.active: util.sleep(10)	
 
@@ -52,6 +57,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		self.pitch = self.setting('pitch')
+		self.pipe = self.setting('pipe')
 		volume = self.setting('volume')
 		self.volume = int(round(100 * (10**(volume/20.0)))) #convert from dB to percent
 		
@@ -61,7 +67,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		self.baseUpdate()
 
 	def getMode(self):
-		if self.setting('output_via_espeak'):
+		if self.setting('output_via_espeak') or self.setting('pipe'):
 			return base.SimpleTTSBackendBase.ENGINESPEAK
 		else:
 			return base.SimpleTTSBackendBase.WAVOUT

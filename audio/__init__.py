@@ -17,6 +17,15 @@ try:
 except:
 	pass
 	
+def check_snd_bm2835():
+	return 'snd_bcm2835' in subprocess.check_output(['lsmod'])
+
+def load_snd_bm2835():
+	if check_snd_bm2835(): return
+	import getpass
+	if getpass.getuser() == 'root':
+		subprocess.call(['modprobe snd_bm2835'])
+
 class AudioPlayer:
 	ID = ''
 	name = ''
@@ -29,6 +38,8 @@ class AudioPlayer:
 	def setSpeed(self,speed): pass
 	def setPitch(self,pitch): pass
 	def setVolume(self,volume): pass
+	def canPipe(self): return False
+	def pipe(self,out): pass
 	def play(self,path): pass
 	def isPlaying(self): return False
 	def stop(self): pass
@@ -145,6 +156,7 @@ class SubprocessAudioPlayer(AudioPlayer):
 	_speedArgs = None
 	_speedMultiplier = 1
 	_volumeArgs = None
+	_pipeArgs = None
 	kill = False
 			
 	def __init__(self):
@@ -165,6 +177,14 @@ class SubprocessAudioPlayer(AudioPlayer):
 	def playArgs(self,path):
 		return self.baseArgs(path)
 		
+	def canPipe(self):
+		return bool(self.pipe)
+		
+	def pipe(self,source):
+		self._wavProcess = subprocess.Popen(self._pipeArgs,stdin=source.stdout,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		source.stdout.close() #This is to prevent hanging while waiting for input, but I didn't have a problem without it
+		self._wavProcess.communicate()
+		
 	def setSpeed(self,speed):
 		self.speed = speed
 		
@@ -181,7 +201,7 @@ class SubprocessAudioPlayer(AudioPlayer):
 		return self._wavProcess and self._wavProcess.poll() == None
 
 	def stop(self):
-		if not self._wavProcess: return
+		if not self._wavProcess or self._wavProcess.poll(): return
 		try:
 			if self.kill:
 				self._wavProcess.kill()
@@ -192,7 +212,7 @@ class SubprocessAudioPlayer(AudioPlayer):
 		
 	def close(self):
 		self.active = False
-		if not self._wavProcess: return
+		if not self._wavProcess or self._wavProcess.poll(): return
 		try:
 			self._wavProcess.kill()
 		except:
@@ -211,6 +231,13 @@ class AplayAudioPlayer(SubprocessAudioPlayer):
 	name = 'aplay'
 	_availableArgs = ('aplay','--version')
 	_playArgs = ('aplay','-q',None)
+	_pipeArgs = ('aplay','-q')
+	kill = True
+	
+	def __init__(self):
+		SubprocessAudioPlayer.__init__(self)
+		if xbmc and xbmc.getCondVisibility('System.Platform.Linux.RaspberryPi'):
+			load_snd_bm2835()
 
 class PaplayAudioPlayer(SubprocessAudioPlayer):
 	ID = 'paplay'
@@ -324,6 +351,8 @@ class BasePlayerHandler:
 	def setSpeed(self,speed): pass
 	def setVolume(self,speed): pass
 	def player(self): return None
+	def canPipe(self): return False
+	def pipeAudio(self,out): pass
 	def getOutFile(self,text): raise Exception('Not Implemented')
 	def play(self): raise Exception('Not Implemented')
 	def isPlaying(self): raise Exception('Not Implemented')
@@ -360,6 +389,12 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 	def player(self):
 		return self._player and self._player.ID or None
 
+	def canPipe(self):
+		return self._player.canPipe()
+		
+	def pipeAudio(self,out):
+		return self._player.pipe(out)
+		
 	def playerAvailable(self):
 		return bool(self.availablePlayers)
 

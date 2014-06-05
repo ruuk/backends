@@ -298,6 +298,12 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def setVolume(self,volume):
 		self.player.setVolume(volume)
 		
+	def canPipe(self):
+		return self.player.canPipe()
+		
+	def pipeAudio(self,out):
+		self.player.pipeAudio(out)
+		
 	def runCommand(self,text,outFile):
 		"""Convert text to speech and output to a .wav file
 		

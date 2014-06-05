@@ -1,9 +1,11 @@
 import threading
-import array, sys
-from ctypes import *
-from comtypes import _safearray, GUID, IUnknown, com_interface_registry
+import array
+from ctypes import (POINTER, Structure, byref, cast, c_long, memmove, pointer,
+                    sizeof)
+from comtypes import _safearray, IUnknown, com_interface_registry, npsupport
 from comtypes.patcher import Patch
 _safearray_type_cache = {}
+
 
 class _SafeArrayAsNdArrayContextManager(object):
     '''Context manager allowing safe arrays to be extracted as ndarrays.
@@ -23,21 +25,24 @@ class _SafeArrayAsNdArrayContextManager(object):
     thread_local = threading.local()
 
     def __enter__(self):
-        self.thread_local.in_context = True
-        return
+        try:
+            self.thread_local.count += 1
+        except AttributeError:
+            self.thread_local.count = 1
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.thread_local.in_context = False
-        return
+        self.thread_local.count -= 1
 
     def __nonzero__(self):
         '''True if context manager is currently entered on given thread.
 
         '''
-        return getattr(self.thread_local, 'in_context', False)
+        return bool(getattr(self.thread_local, 'count', 0))
+
 
 # Global _SafeArrayAsNdArrayContextManager
 safearray_as_ndarray = _SafeArrayAsNdArrayContextManager()
+
 
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
@@ -53,6 +58,7 @@ def _midlSAFEARRAY(itemtype):
         sa_type = _make_safearray_type(itemtype)
         _safearray_type_cache[itemtype] = sa_type
         return POINTER(sa_type)
+
 
 def _make_safearray_type(itemtype):
     # Create and return a subclass of tagSAFEARRAY
@@ -89,11 +95,11 @@ def _make_safearray_type(itemtype):
     @Patch(POINTER(sa_type))
     class _(object):
         # Should explain the ideas how SAFEARRAY is used in comtypes
-        _itemtype_ = itemtype # a ctypes type
-        _vartype_ = vartype # a VARTYPE value: VT_...
+        _itemtype_ = itemtype  # a ctypes type
+        _vartype_ = vartype  # a VARTYPE value: VT_...
         _needsfree = False
 
-##        @classmethod
+        @classmethod
         def create(cls, value, extra=None):
             """Create a POINTER(SAFEARRAY_...) instance of the correct
             type; value is an object containing the items to store.
@@ -103,11 +109,8 @@ def _make_safearray_type(itemtype):
             one-dimensional arrays.  To create multidimensional arrys,
             numpy arrays must be passed.
             """
-
-            if "numpy" in sys.modules:
-                numpy = sys.modules["numpy"]
-                if isinstance(value, numpy.ndarray):
-                    return cls.create_from_ndarray(value, extra)
+            if npsupport.isndarray(value):
+                return cls.create_from_ndarray(value, extra)
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.
@@ -130,7 +133,7 @@ def _make_safearray_type(itemtype):
             # to the correct type:
             pa = cast(pa, cls)
             # Now, fill the data in:
-            ptr = POINTER(cls._itemtype_)() # container for the values
+            ptr = POINTER(cls._itemtype_)()  # container for the values
             _safearray.SafeArrayAccessData(pa, byref(ptr))
             try:
                 if isinstance(value, array.array):
@@ -143,22 +146,27 @@ def _make_safearray_type(itemtype):
             finally:
                 _safearray.SafeArrayUnaccessData(pa)
             return pa
-        create = classmethod(create)
 
-##        @classmethod
+        @classmethod
         def create_from_ndarray(cls, value, extra, lBound=0):
+            from comtypes.automation import VARIANT
             #c:/python25/lib/site-packages/numpy/ctypeslib.py
             numpy = __import__("numpy.ctypeslib")
+
+            # If processing VARIANT, makes sure the array type is correct.
+            if cls._itemtype_ is VARIANT:
+                if value.dtype != npsupport.VARIANT_dtype:
+                    value = _ndarray_to_variant_array(value)
+            else:
+                ai = value.__array_interface__
+                if ai["version"] != 3:
+                    raise TypeError("only __array_interface__ version 3 supported")
+                if cls._itemtype_ != numpy.ctypeslib._typecodes[ai["typestr"]]:
+                    raise TypeError("Wrong array item type")
 
             # SAFEARRAYs have Fortran order; convert the numpy array if needed
             if not value.flags.f_contiguous:
                 value = numpy.array(value, order="F")
-
-            ai = value.__array_interface__
-            if ai["version"] != 3:
-                raise TypeError("only __array_interface__ version 3 supported")
-            if cls._itemtype_ != numpy.ctypeslib._typecodes[ai["typestr"]]:
-                raise TypeError("Wrong array item type")
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.
@@ -172,9 +180,9 @@ def _make_safearray_type(itemtype):
                 rgsa[i].cElements = d
                 rgsa[i].lBound = lBound
             pa = _safearray.SafeArrayCreateEx(cls._vartype_,
-                                              value.ndim, # cDims
-                                              rgsa, # rgsaBound
-                                              extra) # pvExtra
+                                              value.ndim,  # cDims
+                                              rgsa,  # rgsaBound
+                                              extra)  # pvExtra
             if not pa:
                 if cls._vartype_ == VT_RECORD and extra is None:
                     raise TypeError("Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.")
@@ -184,7 +192,7 @@ def _make_safearray_type(itemtype):
             # to the correct type:
             pa = cast(pa, cls)
             # Now, fill the data in:
-            ptr = POINTER(cls._itemtype_)() # pointer to the item values
+            ptr = POINTER(cls._itemtype_)()  # pointer to the item values
             _safearray.SafeArrayAccessData(pa, byref(ptr))
             try:
                 nbytes = nitems * sizeof(cls._itemtype_)
@@ -192,15 +200,13 @@ def _make_safearray_type(itemtype):
             finally:
                 _safearray.SafeArrayUnaccessData(pa)
             return pa
-        create_from_ndarray = classmethod(create_from_ndarray)
 
-##        @classmethod
+        @classmethod
         def from_param(cls, value):
             if not isinstance(value, cls):
                 value = cls.create(value, extra)
                 value._needsfree = True
             return value
-        from_param = classmethod(from_param)
 
         def __getitem__(self, index):
             # pparray[0] returns the whole array contents.
@@ -223,7 +229,9 @@ def _make_safearray_type(itemtype):
 
         def _get_size(self, dim):
             "Return the number of elements for dimension 'dim'"
-            return _safearray.SafeArrayGetUBound(self, dim)+1 - _safearray.SafeArrayGetLBound(self, dim)
+            ub = _safearray.SafeArrayGetUBound(self, dim) + 1
+            lb = _safearray.SafeArrayGetLBound(self, dim)
+            return ub - lb
 
         def unpack(self):
             """Unpack a POINTER(SAFEARRAY_...) into a Python tuple or ndarray."""
@@ -249,9 +257,11 @@ def _make_safearray_type(itemtype):
                 result = [tuple(result[r::rows]) for r in range(rows)]
                 return tuple(result)
             else:
-                lowerbounds = [_safearray.SafeArrayGetLBound(self, d) for d in range(1, dim+1)]
+                lowerbounds = [_safearray.SafeArrayGetLBound(self, d)
+                               for d in range(1, dim+1)]
                 indexes = (c_long * dim)(*lowerbounds)
-                upperbounds = [_safearray.SafeArrayGetUBound(self, d) for d in range(1, dim+1)]
+                upperbounds = [_safearray.SafeArrayGetUBound(self, d)
+                               for d in range(1, dim+1)]
                 row = self._get_row(0, indexes, lowerbounds, upperbounds)
                 if safearray_as_ndarray:
                     import numpy
@@ -265,7 +275,7 @@ def _make_safearray_type(itemtype):
             # XXX Not sure this is true:
             # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
             # interface iid by SafeArrayGetIID().
-            ptr = POINTER(self._itemtype_)() # container for the values
+            ptr = POINTER(self._itemtype_)()  # container for the values
             _safearray.SafeArrayAccessData(self, byref(ptr))
             try:
                 if self._itemtype_ == VARIANT:
@@ -304,6 +314,7 @@ def _make_safearray_type(itemtype):
                             arr = numpy.ctypeslib.as_array(ptr, (num_elements,))
                             return arr.copy()
                         return ptr[:num_elements]
+
                     def keep_safearray(v):
                         v.__keepref = self
                         return v
@@ -336,12 +347,11 @@ def _make_safearray_type(itemtype):
     @Patch(POINTER(POINTER(sa_type)))
     class __(object):
 
-##        @classmethod
+        @classmethod
         def from_param(cls, value):
             if isinstance(value, cls._type_):
                 return byref(value)
             return byref(cls._type_.create(value, extra))
-        from_param = classmethod(from_param)
 
         def __setitem__(self, index, value):
             # create an LP_SAFEARRAY_... instance
@@ -351,3 +361,41 @@ def _make_safearray_type(itemtype):
             super(POINTER(POINTER(sa_type)), self).__setitem__(index, pa)
 
     return sa_type
+
+
+def _ndarray_to_variant_array(value):
+    """ Convert an ndarray to VARIANT_dtype array """
+    numpy = npsupport.numpy
+
+    # Check that variant arrays are supported
+    if npsupport.VARIANT_dtype is None:
+        msg = "VARIANT ndarrays require NumPy 1.7 or newer."
+        raise RuntimeError(msg)
+
+    # special cases
+    if numpy.issubdtype(value.dtype, npsupport.datetime64):
+        return _datetime64_ndarray_to_variant_array(value)
+
+    from comtypes.automation import VARIANT
+    # Empty array
+    varr = numpy.zeros(value.shape, npsupport.VARIANT_dtype, order='F')
+    # Convert each value to a variant and put it in the array.
+    varr.flat = [VARIANT(v) for v in value.flat]
+    return varr
+
+
+def _datetime64_ndarray_to_variant_array(value):
+    """ Convert an ndarray of datetime64 to VARIANT_dtype array """
+    # The OLE automation date format is a floating point value, counting days
+    # since midnight 30 December 1899. Hours and minutes are represented as
+    # fractional days.
+    from comtypes.automation import VT_DATE
+    numpy = npsupport.numpy
+    value = numpy.array(value, "datetime64[ns]")
+    value = value - npsupport.com_null_date64
+    # Convert to days
+    value = value / numpy.timedelta64(1, 'D')
+    varr = numpy.zeros(value.shape, npsupport.VARIANT_dtype, order='F')
+    varr['vt'] = VT_DATE
+    varr['_']['VT_R8'].flat = value.flat
+    return varr
