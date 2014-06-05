@@ -25,8 +25,9 @@ def load_snd_bm2835():
 	if check_snd_bm2835(): return
 	import getpass
 	if getpass.getuser() == 'root':
-		util.LOG('OpenElec on RPi detected - loading snd_bm2835 module')
-		subprocess.call(['modprobe snd_bm2835'])
+		util.LOG('OpenElec on RPi detected - loading snd_bm2835 module...')
+		util.LOG(os.system('modprobe snd-bcm2835') and 'Load snd_bm2835: FAILED' or 'Load snd_bm2835: SUCCESS')
+		#subprocess.call(['modprobe','snd-bm2835']) #doesn't work on OpenElec (only tested) - can't find module
 
 class AudioPlayer:
 	ID = ''
