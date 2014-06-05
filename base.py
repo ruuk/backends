@@ -266,6 +266,7 @@ class ThreadedTTSBackend(TTSBackendBase):
 class SimpleTTSBackendBase(ThreadedTTSBackend):
 	WAVOUT = 0
 	ENGINESPEAK = 1
+	PIPE = 2
 	canStreamWav = True
 	"""Handles speech engines that output wav files
 
@@ -276,17 +277,22 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def __init__(self,player=None,mode=WAVOUT):
 		self.mode = None
 		self._simpleIsSpeaking = False
-		self.setMode(mode)
 		self.player = player or audio.WavAudioPlayerHandler()
+		self.setMode(mode)
 		self.threadedInit()
 	
 	def setMode(self,mode):
 		assert isinstance(mode,int), 'Bad mode'
 		if mode == self.mode: return
+		if mode == self.PIPE:
+			if self.player.canPipe():
+				util.LOG('Mode: PIPE')
+			else:
+				mode = self.WAVOUT
 		self.mode = mode
 		if mode == self.WAVOUT:
 			util.LOG('Mode: WAVOUT')
-		else:
+		elif mode == self.ENGINESPEAK:
 			util.LOG('Mode: ENGINESPEAK')
 
 	def setPlayer(self,preferred):
@@ -298,12 +304,6 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def setVolume(self,volume):
 		self.player.setVolume(volume)
 		
-	def canPipe(self):
-		return self.player.canPipe()
-		
-	def pipeAudio(self,out):
-		self.player.pipeAudio(out)
-		
 	def runCommand(self,text,outFile):
 		"""Convert text to speech and output to a .wav file
 		
@@ -314,10 +314,18 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 		raise Exception('Not Implemented')
 		
 	def runCommandAndSpeak(self,text):
-		"""Convert text to speech and output to a .wav file
+		"""Convert text to speech and output directly
 		
 		If using ENGINESPEAK mode, subclasses must override this method
-		and speak text.
+		and speak text and should block until speech is complete.
+		"""
+		raise Exception('Not Implemented')
+
+	def runCommandAndPipe(self,text):
+		"""Convert text to speech and pipe to audio player
+		
+		If using PIPE mode, subclasses must override this method
+		and return an open pipe to wav data
 		"""
 		raise Exception('Not Implemented')
 	
@@ -332,6 +340,10 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 			outFile = self.player.getOutFile(text)
 			if not self.runCommand(text,outFile): return
 			self.player.play()
+		elif self.mode == self.PIPE:
+			source = self.runCommandAndPipe(text)
+			if not source: return
+			self.player.pipeAudio(source)
 		else:
 			self._simpleIsSpeaking = True
 			self.runCommandAndSpeak(text)

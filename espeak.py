@@ -29,46 +29,48 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		self.baseUpdate()
 		self.process = None
 
-	def runCommand(self,text,outFile):
-		args = ['espeak','-w',outFile]
-		if self.voice: args += ['-v',self.voice]
-		if self.speed: args += ['-s',str(self.speed)]
-		if self.pitch: args += ['-p',str(self.pitch)]
-		if self.volume != 100: args.extend(('-a',str(self.volume)))
-		args.append(text.encode('utf-8'))
-		subprocess.call(args)
-		return True
-
-	def runCommandAndSpeak(self,text):
-		args = ['espeak']
+	def addCommonArgs(self,args,text):
 		if self.voice: args.extend(('-v',self.voice))
 		if self.speed: args.extend(('-s',str(self.speed)))
 		if self.pitch: args.extend(('-p',str(self.pitch)))
 		if self.volume != 100: args.extend(('-a',str(self.volume)))
 		args.append(text.encode('utf-8'))
-		if self.pipe and self.canPipe():
-			args.append('--stdout')
-			self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
-			return self.pipeAudio(self.process)			
-		self.process = subprocess.Popen(args)
-		while self.process.poll() == None and self.active: util.sleep(10)	
+		
+	def runCommand(self,text,outFile):
+		args = ['espeak','-w',outFile]
+		self.addCommonArgs(args,text)
+		subprocess.call(args)
+		return True
 
+	def runCommandAndSpeak(self,text):
+		args = ['espeak']
+		self.addCommonArgs(args,text)
+		self.process = subprocess.Popen(args)
+		while self.process.poll() == None and self.active: util.sleep(10)
+
+	def runCommandAndPipe(self,text):
+		args = ['espeak','--stdout']
+		self.addCommonArgs(args,text)
+		self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
+		return self.process.stdout		
+	
 	def baseUpdate(self):
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		self.pitch = self.setting('pitch')
-		self.pipe = self.setting('pipe')
 		volume = self.setting('volume')
 		self.volume = int(round(100 * (10**(volume/20.0)))) #convert from dB to percent
 		
 	def update(self):
-		self.setMode(self.getMode())
 		self.setPlayer(self.setting('player'))
+		self.setMode(self.getMode())
 		self.baseUpdate()
 
 	def getMode(self):
-		if self.setting('output_via_espeak') or self.setting('pipe'):
+		if self.setting('output_via_espeak'):
 			return base.SimpleTTSBackendBase.ENGINESPEAK
+		elif self.setting('pipe'):
+			return base.SimpleTTSBackendBase.PIPE
 		else:
 			return base.SimpleTTSBackendBase.WAVOUT
 

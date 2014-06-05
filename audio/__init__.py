@@ -21,9 +21,11 @@ def check_snd_bm2835():
 	return 'snd_bcm2835' in subprocess.check_output(['lsmod'])
 
 def load_snd_bm2835():
+	if not xbmc or not xbmc.getCondVisibility('System.Platform.Linux.RaspberryPi'): return
 	if check_snd_bm2835(): return
 	import getpass
 	if getpass.getuser() == 'root':
+		util.LOG('OpenElec on RPi detected - loading snd_bm2835 module')
 		subprocess.call(['modprobe snd_bm2835'])
 
 class AudioPlayer:
@@ -39,7 +41,7 @@ class AudioPlayer:
 	def setPitch(self,pitch): pass
 	def setVolume(self,volume): pass
 	def canPipe(self): return False
-	def pipe(self,out): pass
+	def pipe(self,source): pass
 	def play(self,path): pass
 	def isPlaying(self): return False
 	def stop(self): pass
@@ -178,11 +180,11 @@ class SubprocessAudioPlayer(AudioPlayer):
 		return self.baseArgs(path)
 		
 	def canPipe(self):
-		return bool(self.pipe)
+		return bool(self._pipeArgs)
 		
 	def pipe(self,source):
-		self._wavProcess = subprocess.Popen(self._pipeArgs,stdin=source.stdout,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-		source.stdout.close() #This is to prevent hanging while waiting for input, but I didn't have a problem without it
+		self._wavProcess = subprocess.Popen(self._pipeArgs,stdin=source,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+		source.close() #This is to prevent hanging while waiting for input, but I didn't have a problem without it
 		self._wavProcess.communicate()
 		
 	def setSpeed(self,speed):
@@ -236,8 +238,7 @@ class AplayAudioPlayer(SubprocessAudioPlayer):
 	
 	def __init__(self):
 		SubprocessAudioPlayer.__init__(self)
-		if xbmc and xbmc.getCondVisibility('System.Platform.Linux.RaspberryPi'):
-			load_snd_bm2835()
+		load_snd_bm2835() #For raspberry Pi
 
 class PaplayAudioPlayer(SubprocessAudioPlayer):
 	ID = 'paplay'
@@ -352,7 +353,7 @@ class BasePlayerHandler:
 	def setVolume(self,speed): pass
 	def player(self): return None
 	def canPipe(self): return False
-	def pipeAudio(self,out): pass
+	def pipeAudio(self,source): pass
 	def getOutFile(self,text): raise Exception('Not Implemented')
 	def play(self): raise Exception('Not Implemented')
 	def isPlaying(self): raise Exception('Not Implemented')
@@ -392,8 +393,8 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 	def canPipe(self):
 		return self._player.canPipe()
 		
-	def pipeAudio(self,out):
-		return self._player.pipe(out)
+	def pipeAudio(self,source):
+		return self._player.pipe(source)
 		
 	def playerAvailable(self):
 		return bool(self.availablePlayers)
