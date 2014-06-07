@@ -18,16 +18,27 @@ except:
 	pass
 	
 def check_snd_bm2835():
-	return 'snd_bcm2835' in subprocess.check_output(['lsmod'])
+	try:
+		return 'snd_bcm2835' in subprocess.check_output(['lsmod'])
+	except:
+		util.ERROR('check_snd_bm2835(): lsmod filed',hide_tb=True)
+	return False
 
 def load_snd_bm2835():
 	if not xbmc or not xbmc.getCondVisibility('System.Platform.Linux.RaspberryPi'): return
 	if check_snd_bm2835(): return
 	import getpass
+	#TODO: Maybe use util.raspberryPiDistro() to confirm distro
 	if getpass.getuser() == 'root':
 		util.LOG('OpenElec on RPi detected - loading snd_bm2835 module...')
 		util.LOG(os.system('modprobe snd-bcm2835') and 'Load snd_bm2835: FAILED' or 'Load snd_bm2835: SUCCESS')
 		#subprocess.call(['modprobe','snd-bm2835']) #doesn't work on OpenElec (only tested) - can't find module
+	elif getpass.getuser() == 'pi':
+		util.LOG('RaspBMC detected - loading snd_bm2835 module...')
+		util.LOG(os.system('sudo -n modprobe snd-bcm2835') and 'Load snd_bm2835: FAILED' or 'Load snd_bm2835: SUCCESS') #Will just fail if sudo needs a password
+	else:
+		util.LOG('UNKNOWN Raspberry Pi - maybe loading snd_bm2835 module...')
+		util.LOG(os.system('sudo -n modprobe snd-bcm2835') and 'Load snd_bm2835: FAILED' or 'Load snd_bm2835: SUCCESS') #Will just fail if sudo needs a password
 
 class AudioPlayer:
 	ID = ''
@@ -244,10 +255,6 @@ class AplayAudioPlayer(SubprocessAudioPlayer):
 	_playArgs = ('aplay','-q',None)
 	_pipeArgs = ('aplay','-q')
 	kill = True
-	
-	def __init__(self):
-		SubprocessAudioPlayer.__init__(self)
-		load_snd_bm2835() #For raspberry Pi
 
 class PaplayAudioPlayer(SubprocessAudioPlayer):
 	ID = 'paplay'
@@ -421,7 +428,7 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 				self.hasAdvancedPlayer = True
 
 	def setPlayer(self,preferred=None,advanced=None):
-		if preferred == self._player.ID or preferred == self.preferred: return
+		if preferred == self._player.ID or preferred == self.preferred: return self._player
 		self.preferred = preferred
 		if advanced == None: advanced = self.advanced
 		old = self._player
@@ -440,6 +447,7 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 			self._player = AudioPlayer()
 
 		if self._player and old.ID != self._player: util.LOG('Player: %s' % self._player.name)
+		if not self._player.ID == 'PlaySFX': load_snd_bm2835()
 		return self._player
 
 	def _deleteOutFile(self):

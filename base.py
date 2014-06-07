@@ -294,6 +294,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 		if mode == self.WAVOUT:
 			util.LOG('Mode: WAVOUT')
 		elif mode == self.ENGINESPEAK:
+			audio.load_snd_bm2835()
 			util.LOG('Mode: ENGINESPEAK')
 
 	def setPlayer(self,preferred):
