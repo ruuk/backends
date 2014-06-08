@@ -70,10 +70,21 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
 		module = self.setting('module')
 		if module: self.speechdObject.set_output_module(module)
 		voice = self.setting('voice')
-		if voice: self.speechdObject.set_synthesis_voice(voice)
+		if voice:
+			self.speechdObject.set_language(self.getVoiceLanguage(voice))
+			self.speechdObject.set_synthesis_voice(voice)
 		self.speechdObject.set_rate(self.setting('speed'))
 		self.speechdObject.set_pitch(self.setting('pitch'))
 		self.speechdObject.set_volume( (self.setting('volume') * 2) - 100 ) #Covert from % to (-100 to 100)
+
+	def getVoiceLanguage(self,voice):
+		res = None
+		voices = self.speechdObject.list_synthesis_voices()
+		for v in voices:
+			if voice == v[0]:
+				res = v[1]
+				break
+		return res
 
 	@classmethod
 	def settingList(cls,setting,*args):
