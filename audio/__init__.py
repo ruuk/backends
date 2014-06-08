@@ -447,7 +447,7 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 			self._player = AudioPlayer()
 
 		if self._player and old.ID != self._player: util.LOG('Player: %s' % self._player.name)
-		if not self._player.ID == 'PlaySFX': load_snd_bm2835()
+		if not self._player.ID == 'PlaySFX': load_snd_bm2835() #For Raspberry Pi
 		return self._player
 
 	def _deleteOutFile(self):

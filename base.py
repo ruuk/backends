@@ -284,7 +284,6 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	
 	def setMode(self,mode):
 		assert isinstance(mode,int), 'Bad mode'
-		if mode == self.mode: return
 		if mode == self.PIPE:
 			if self.player.canPipe():
 				util.LOG('Mode: PIPE')
