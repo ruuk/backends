@@ -278,7 +278,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	def __init__(self,player=None,mode=WAVOUT):
 		self.mode = None
 		self._simpleIsSpeaking = False
-		self.player = player or self.playerClass
+		self.player = player or self.playerClass()
 		self.setMode(mode)
 		self.threadedInit()
 	

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys, wave, array, StringIO
-from base import ThreadedTTSBackend
+from base import SimpleTTSBackendBase
 from lib import util
 from xml.sax import saxutils
 
-class SAPITTSBackend(ThreadedTTSBackend):
+class SAPITTSBackend(SimpleTTSBackendBase):
 	provider = 'SAPI'
 	displayName = 'SAPI (Windows Internal)'
-	settings = {	'voice':'',
+	settings = {		'speak_via_xbmc':True,
+					'voice':'',
 					'speed':0,
 					'pitch':0,
 					'volume':100
@@ -32,18 +33,28 @@ class SAPITTSBackend(ThreadedTTSBackend):
 </speak>'''
 	
 	def __init__(self):
+		self.SpVoice = None
+		SimpleTTSBackendBase.__init__(self,mode=self.getMode())
 		import comtypes.client
 		from _ctypes import COMError
 		self.comtypesClient = comtypes.client
 		self.COMError = COMError
 		self.resetSAPI()
 		self.update()
-		self.threadedInit()
 		
 	def resetSAPI(self):
 		self.SpVoice = self.comtypesClient.CreateObject("SAPI.SpVoice")
 		
-	def threadedSay(self,text):
+	def runCommand(self,text,outFile):
+		if not self.SpVoice: return
+		stream = self.comtypesClient.CreateObject("SAPI.SpFileStream")
+		stream.Open(outFile, 3) #3=SSFMCreateForWrite
+		ssml = self.ssml.format(text=saxutils.escape(text))
+		self.SpVoice.Speak(ssml,0)
+		stream.close()
+		return True
+
+	def runCommandAndSpeak(self,text):
 		if not self.SpVoice: return
 		ssml = self.ssml.format(text=saxutils.escape(text))
 		try:
@@ -55,16 +66,6 @@ class SAPITTSBackend(ThreadedTTSBackend):
 				self.SpVoice.Speak(ssml,1)
 			except self.COMError:
 				util.ERROR('COMError: SAPI Failed after reset')
-#	def getWavStream(self,text):
-#		#Have SAPI write to file
-#		stream = self.comtypesClient.CreateObject("SAPI.SpFileStream")
-#		fpath = os.path.join(util.getTmpfs(),'speech.wav')
-#		open(fpath,'w').close()
-#		stream.Open(fpath,3)
-#		self.SpVoice.AudioOutputStream = stream
-#		self.SpVoice.Speak(text,0)
-#		stream.close()
-#		return open(fpath,'rb')
 		
 	def getWavStream(self,text):
 		fmt = self.comtypesClient.CreateObject("SAPI.SpAudioFormat")
@@ -76,6 +77,7 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		
 		ssml = self.ssml.format(text=saxutils.escape(text))
 		self.SpVoice.Speak(ssml,0)
+		return stream
 		
 		wavIO = StringIO.StringIO()
 		self.createWavFileObject(wavIO,stream)
@@ -87,39 +89,13 @@ class SAPITTSBackend(ThreadedTTSBackend):
 		wavFileObj.setparams((1, 2, 22050, 0, 'NONE', 'not compressed'))
 		wavFileObj.writeframes(array.array('B',stream.GetData()).tostring())
 		wavFileObj.close()
-	
-#	def createWavFileObject(self,wavIO,stream):
-#		#Write wave headers manually
-#		import struct
-#		data = array.array('B',stream.GetData()).tostring()
-#		dlen = len(data)
-#		header = struct.pack(		'4sl8slhhllhh4sl',
-#											'RIFF',
-#											dlen+36,
-#											'WAVEfmt ',
-#											16, #Bits
-#											1, #Mode
-#											1, #Channels
-#											22050, #Samplerate
-#											22050*16/8, #Samplerate*Bits/8
-#											1*16/8, #Channels*Bits/8
-#											16,
-#											'data',
-#											dlen
-#		)
-#		wavIO.write(header)
-#		wavIO.write(data)
 
 	def stop(self):
 		if not self.SpVoice: return
 		self.SpVoice.Speak('',3)
-
-	def isSpeaking(self):
-		return ThreadedTTSBackend.isSpeaking(self) or None
 		
 	def update(self):
-		#self.SpVoice.Rate = self.setting('speed')
-		#self.SpVoice.Volume = self.setting('volume')
+		self.setMode(self.getMode())
 		self.ssml = self.baseSSML.format(text='{text}',volume=self.setting('volume'),speed=self.setting('speed'),pitch=self.setting('pitch'))
 		voice_name = self.setting('voice')
 		if voice_name:
@@ -133,6 +109,13 @@ class SAPITTSBackend(ThreadedTTSBackend):
 				return
 			self.SpVoice.Voice = voice
 		
+	def getMode(self):
+		if self.setting('speak_via_xbmc'):
+			return SimpleTTSBackendBase.WAVOUT
+		else:
+			if self.SpVoice: self.SpVoice.AudioOutputStream = None
+			return SimpleTTSBackendBase.ENGINESPEAK
+
 	def close(self):
 		del self.SpVoice
 		self.SpVoice = None
@@ -154,3 +137,36 @@ class SAPITTSBackend(ThreadedTTSBackend):
 	@staticmethod
 	def available():
 		return sys.platform.lower().startswith('win')
+
+#	def getWavStream(self,text):
+#		#Have SAPI write to file
+#		stream = self.comtypesClient.CreateObject("SAPI.SpFileStream")
+#		fpath = os.path.join(util.getTmpfs(),'speech.wav')
+#		open(fpath,'w').close()
+#		stream.Open(fpath,3)
+#		self.SpVoice.AudioOutputStream = stream
+#		self.SpVoice.Speak(text,0)
+#		stream.close()
+#		return open(fpath,'rb')
+		
+#	def createWavFileObject(self,wavIO,stream):
+#		#Write wave headers manually
+#		import struct
+#		data = array.array('B',stream.GetData()).tostring()
+#		dlen = len(data)
+#		header = struct.pack(		'4sl8slhhllhh4sl',
+#											'RIFF',
+#											dlen+36,
+#											'WAVEfmt ',
+#											16, #Bits
+#											1, #Mode
+#											1, #Channels
+#											22050, #Samplerate
+#											22050*16/8, #Samplerate*Bits/8
+#											1*16/8, #Channels*Bits/8
+#											16,
+#											'data',
+#											dlen
+#		)
+#		wavIO.write(header)
+#		wavIO.write(data)

@@ -9,8 +9,10 @@ class Patch(object):
     >>> class MyClass:
     ...     def __init__(self, param):
     ...         self.param = param
+    ...     def bar(self):
+    ...         print("orig bar")
 
-    To add attributes to MyClass, you can use MonkeyPatch:
+    To add attributes to MyClass, you can use Patch:
 
     >>> @Patch(MyClass)
     ... class JustANamespace:
@@ -22,6 +24,28 @@ class Patch(object):
 
     The namespace is assigned None, so there's no mistaking the purpose
     >>> JustANamespace
+
+    The patcher will replace the existing methods:
+
+    >>> @Patch(MyClass)
+    ... class SomeNamespace:
+    ...     def bar(self):
+    ...         print("replaced bar")
+    >>> ob = MyClass('foo')
+    >>> ob.bar()
+    replaced bar
+
+    But it will not replace methods if no_replace is indicated.
+
+    >>> @Patch(MyClass)
+    ... class AnotherNamespace:
+    ...     @no_replace
+    ...     def bar(self):
+    ...         print("candy bar")
+    >>> ob = MyClass('foo')
+    >>> ob.bar()
+    replaced bar
+
     """
 
     def __init__(self, target):
@@ -32,7 +56,7 @@ class Patch(object):
             if name in vars(ReferenceEmptyClass):
                 continue
             no_replace = getattr(value, '__no_replace', False)
-            if no_replace and hasattr(value, name):
+            if no_replace and hasattr(self.target, name):
                 continue
             setattr(self.target, name, value)
 
