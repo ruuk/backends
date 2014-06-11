@@ -91,7 +91,7 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 
 	def stop(self):
 		if not self.SpVoice: return
-		self.SpVoice.Speak('',3)
+		if not self.inWavStreamMode: self.SpVoice.Speak('',3)
 		
 	def update(self):
 		self.setMode(self.getMode())

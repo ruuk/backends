@@ -14,6 +14,7 @@ class TTSBackendBase(object):
 	pauseInsert = u'...'
 	settings = None
 	canStreamWav = False
+	inWavStreamMode = False
 	interval = 400
 	broken = False
 	speedConstraints = (0,0,0,True)
@@ -27,10 +28,13 @@ class TTSBackendBase(object):
 
 	def __enter__(self):
 		return self
-		
+
 	def __exit__(self,exc_type,exc_value,traceback):
 		self._close()
-		
+
+	def setWavStreamMode(self,enable=True):
+		self.inWavStreamMode = enable
+
 	def scaleSpeed(self,value,limit): #Target is between -20 and 20
 		return self.scaleValue(value,self.speedConstraints,limit)
 		
