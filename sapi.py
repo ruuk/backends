@@ -77,7 +77,6 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		
 		ssml = self.ssml.format(text=saxutils.escape(text))
 		self.SpVoice.Speak(ssml,0)
-		return stream
 		
 		wavIO = StringIO.StringIO()
 		self.createWavFileObject(wavIO,stream)
