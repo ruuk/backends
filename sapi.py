@@ -114,10 +114,6 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		else:
 			if self.SpVoice: self.SpVoice.AudioOutputStream = None
 			return SimpleTTSBackendBase.ENGINESPEAK
-
-	def close(self):
-		del self.SpVoice
-		self.SpVoice = None
 	
 	@classmethod
 	def settingList(cls,setting,*args):
