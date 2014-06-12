@@ -7,15 +7,17 @@ class FestivalTTSBackend(SimpleTTSBackendBase):
 	displayName = 'Festival'
 	speedConstraints = (-16,0,12,True)
 	pitchConstraints = (50,105,500,True)
-	settings = {	'voice':'',
-					'volume':0,
-					'speed':0,
-					'pitch':105,
-					'player':None
+	settings = {	
+				'voice':'',
+				'volume':0,
+				'speed':0,
+				'pitch':105,
+				'player':None
 	}
 	
 	def init(self):
 		self.festivalProcess = None
+		self.setMode(SimpleTTSBackendBase.WAVOUT)
 		self.update()
 		
 	def runCommand(self,text,outFile):

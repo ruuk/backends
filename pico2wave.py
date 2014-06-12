@@ -14,6 +14,7 @@ class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 	}
 
 	def init(self):
+		self.setMode(base.SimpleTTSBackendBase.WAVOUT)
 		self.update()
 		
 	def runCommand(self,text,outFile):

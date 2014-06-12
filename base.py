@@ -285,6 +285,7 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	"""
 	def __init__(self):
 		self._simpleIsSpeaking = False
+		self.mode = None
 		self.player = self.playerClass()
 		ThreadedTTSBackend.__init__(self)
 
