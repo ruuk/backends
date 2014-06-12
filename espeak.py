@@ -23,11 +23,9 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 					'pipe':False
 	}
 
-	def __init__(self):
-		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'))
-		base.SimpleTTSBackendBase.__init__(self,player,self.getMode())
-		self.baseUpdate()
+	def init(self):
 		self.process = None
+		self.update()
 
 	def addCommonArgs(self,args,text):
 		if self.voice: args.extend(('-v',self.voice))
@@ -52,19 +50,16 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
 		args = ['espeak','--stdout']
 		self.addCommonArgs(args,text)
 		self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
-		return self.process.stdout		
-	
-	def baseUpdate(self):
+		return self.process.stdout
+		
+	def update(self):
+		self.setPlayer(self.setting('player'))
+		self.setMode(self.getMode())
 		self.voice = self.setting('voice')
 		self.speed = self.setting('speed')
 		self.pitch = self.setting('pitch')
 		volume = self.setting('volume')
 		self.volume = int(round(100 * (10**(volume/20.0)))) #convert from dB to percent
-		
-	def update(self):
-		self.setPlayer(self.setting('player'))
-		self.setMode(self.getMode())
-		self.baseUpdate()
 
 	def getMode(self):
 		if self.setting('output_via_espeak'):

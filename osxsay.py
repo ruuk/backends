@@ -22,7 +22,7 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 			pass
 		return OSXSayTTSBackend_SubProcess()
 
-	def __init__(self):
+	def init(self):
 		import cocoapy
 		self.cocoapy = cocoapy
 		self.pool = cocoapy.ObjCClass('NSAutoreleasePool').alloc().init()
@@ -30,7 +30,6 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 		voices = self.longVoices()
 		self.saveVoices(voices) #Save the voices to file, so we can get provide them for selection without initializing the synth again
 		self.update()
-		self.threadedInit()
 		
 	def threadedSay(self,text):
 		if not text: return

@@ -2,7 +2,6 @@
 import os, subprocess
 from lib import util
 import base
-import audio
 
 class FliteTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'Flite'
@@ -16,9 +15,7 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 	interval = 100
 	onATV2 = util.isATV2()
 	
-	def __init__(self):
-		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'))
-		base.SimpleTTSBackendBase.__init__(self,player, self.getMode())
+	def init(self):
 		self.process = None
 		self.update()
 		

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import audio
 import base
 import urllib, urllib2
 from lib import util
@@ -30,12 +29,10 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 					'pipe': False
 	}
 
-	def __init__(self):
-		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'))
-		base.SimpleTTSBackendBase.__init__(self,player,mode=self.getMode())
-		self.baseUpdate()
+	def init(self):
 		self.process = None
 		self.failFlag = False
+		self.update()
 
 	def setHTTPURL(self):
 		host = self.setting('host')
@@ -118,7 +115,10 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 		else:
 			return base.SimpleTTSBackendBase.WAVOUT
 			
-	def baseUpdate(self):
+	def update(self):
+		self.setPlayer(self.setting('player'))
+		self.setMode(self.getMode())
+		
 		self.setHTTPURL()
 		self.perlServer = self.setting('perl_server') #Not really currently used
 		version = self.getVersion()
@@ -159,11 +159,6 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
 		except:
 			err = util.ERROR('Failed to get speech.server version',hide_tb=True)
 			return err
-
-	def update(self):
-		self.setPlayer(self.setting('player'))
-		self.setMode(self.getMode())
-		self.baseUpdate()
 		
 	def serverStop(self):
 		req = urllib2.Request(self.httphost + 'stop', '')

@@ -7,13 +7,13 @@ class JAWSTTSBackend(ThreadedTTSBackend):
 	provider = 'JAWS'
 	displayName = 'JAWS'
 	interval = 50
-	def __init__(self):
+
+	def init(self):
 		import comtypes.client
 		try:
 			self.jaws = comtypes.client.CreateObject('FreedomSci.JawsApi')
 		except:
 			self.jaws = comtypes.client.CreateObject('jfwapi')
-		self.threadedInit()
 		
 	def threadedSay(self,text):
 		if not self.jaws: return

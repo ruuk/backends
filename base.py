@@ -26,11 +26,21 @@ class TTSBackendBase(object):
 	deadReason = '' #Backend should set this reason when marking itself dead
 	_closed = False
 
+	def __init__(self):
+		self.init()
+
 	def __enter__(self):
 		return self
 
 	def __exit__(self,exc_type,exc_value,traceback):
 		self._close()
+
+	def init(self):
+		"""Initialize backend
+
+		Put initialization stuff here
+		"""
+		pass
 
 	def setWavStreamMode(self,enable=True):
 		self.inWavStreamMode = enable
@@ -195,18 +205,12 @@ class ThreadedTTSBackend(TTSBackendBase):
 	"""
 	
 	def __init__(self):
-		self.threadedInit()
-		
-	def threadedInit(self):
-		"""Initialize threading
-		
-		Must be called if you override the __init__() method
-		"""
 		self.active = True
 		self._threadedIsSpeaking = False
 		self.queue = Queue.Queue()
 		self.thread = threading.Thread(target=self._handleQueue,name='TTSThread: %s' % self.provider)
 		self.thread.start()
+		TTSBackendBase.__init__(self)
 		
 	def _handleQueue(self):
 		util.LOG('Threaded TTS Started: {0}'.format(self.provider))
@@ -279,13 +283,11 @@ class SimpleTTSBackendBase(ThreadedTTSBackend):
 	save a wav file to outFile and/or the runCommandAndSpeak() method which
 	must play the speech directly.
 	"""
-	def __init__(self,player=None,mode=WAVOUT):
-		self.mode = None
+	def __init__(self):
 		self._simpleIsSpeaking = False
-		self.player = player or self.playerClass()
-		self.setMode(mode)
-		self.threadedInit()
-	
+		self.player = self.playerClass()
+		ThreadedTTSBackend.__init__(self)
+
 	def setMode(self,mode):
 		assert isinstance(mode,int), 'Bad mode'
 		if mode == self.PIPE:

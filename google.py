@@ -47,16 +47,13 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 	interval = 100
 	playerClass = audio.MP3AudioPlayerHandler
 	settings = {	'language':'en',
-					'player':None,
+					'player':'mpg123',
 					'volume':0,
 					'pipe':False
 	}
 	
-	def __init__(self):
+	def init(self):
 		self.process = None
-		preferred = self.setting('player') or 'mpg123'
-		player = self.playerClass(preferred=preferred)
-		base.SimpleTTSBackendBase.__init__(self,player,mode=base.SimpleTTSBackendBase.WAVOUT)
 		self.update()
 
 	def threadedSay(self,text):

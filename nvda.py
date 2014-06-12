@@ -27,11 +27,11 @@ class NVDATTSBackend(TTSBackendBase):
 		except:
 			return False
 
-	def __init__(self):
+	def init(self):
 		try:
 			self.dll = ctypes.windll.LoadLibrary(DLL_PATH)
 		except:
-			self.dll =None
+			self.dll = None
 
 	def say(self,text,interrupt=False):
 		if not self.dll:

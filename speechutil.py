@@ -14,10 +14,8 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
 	canStreamWav = True
 	interval = 100
 	
-	def __init__(self):
+	def init(self):
 		self.process = None
-		player = audio.WavAudioPlayerHandler()
-		base.SimpleTTSBackendBase.__init__(self,player,mode=base.SimpleTTSBackendBase.WAVOUT)
 
 	def threadedSay(self,text):
 		if not text: return

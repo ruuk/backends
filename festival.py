@@ -14,10 +14,9 @@ class FestivalTTSBackend(SimpleTTSBackendBase):
 					'player':None
 	}
 	
-	def __init__(self):
-		SimpleTTSBackendBase.__init__(self)
-		self.update()
+	def init(self):
 		self.festivalProcess = None
+		self.update()
 		
 	def runCommand(self,text,outFile):
 		if not text: return

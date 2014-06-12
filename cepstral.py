@@ -28,8 +28,8 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 					
 	}
 	
-	def __init__(self):
-		base.SimpleTTSBackendBase.__init__(self,mode=base.SimpleTTSBackendBase.ENGINESPEAK)
+	def init(self):
+		self.setMode(base.SimpleTTSBackendBase.ENGINESPEAK)
 		self.startupinfo = getStartupInfo()
 		self.update()
 		self.process = None

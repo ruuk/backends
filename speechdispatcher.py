@@ -33,9 +33,8 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
 					'volume':100
 	}
 
-	def __init__(self):
+	def init(self):
 		self.connect()
-		self.threadedInit()
 
 	def connect(self):
 		self.speechdObject = getSpeechDSpeaker()

@@ -32,9 +32,8 @@ class SAPITTSBackend(SimpleTTSBackendBase):
   <p>{text}</p>
 </speak>'''
 	
-	def __init__(self):
+	def init(self):
 		self.SpVoice = None
-		SimpleTTSBackendBase.__init__(self,mode=self.getMode())
 		import comtypes.client
 		from _ctypes import COMError
 		self.comtypesClient = comtypes.client

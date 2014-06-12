@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 import os, subprocess
 import base
-import audio
 
 class Pico2WaveTTSBackend(base.SimpleTTSBackendBase):
 	provider = 'pico2wave'
 	displayName = 'pico2wave'
 	interval = 100
 	speedConstraints = (20,100,200,True)
-	settings = {	'language':'',
+	settings = {		'language':'',
 					'speed':0,
 					'player':None,
 					'volume':0
 	}
 
-	def __init__(self):
-		player = audio.WavAudioPlayerHandler(preferred=self.setting('player'),advanced=True)
-		base.SimpleTTSBackendBase.__init__(self,player)
+	def init(self):
 		self.update()
 		
 	def runCommand(self,text,outFile):
