@@ -20,6 +20,8 @@ class TTSBackendBase(object):
 	speedConstraints = (0,0,0,True)
 	pitchConstraints = (0,0,0,True)
 	volumeConstraints = (-12,0,12,True)
+	volumeStep = 1
+	volumeSuffix = 'dB'
 	speedInt = True
 	_loadedSettings = {}
 	dead = False #Backend should flag this true if it's no longer usable
@@ -71,6 +73,24 @@ class TTSBackendBase(object):
 		if constraints[3]: return int(new)
 		return new
 	
+	def volumeUp(self):
+		if not self.settings or not 'volume' in self.settings: return u'Cannot adjust volume'
+		vol = self.setting('volume')
+		vol += self.volumeStep
+		if vol > self.volumeConstraints[2]: vol = self.volumeConstraints[2]
+		util.setSetting('{0}.{1}'.format('volume',self.provider),vol)
+		if util.DEBUG: util.LOG('Volume UP: {0}'.format(vol))
+		return u'{0} {1}'.format(vol,self.volumeSuffix)
+
+	def volumeDown(self):
+		if not self.settings or not 'volume' in self.settings: return u'Cannot adjust volume'
+		vol = self.setting('volume')
+		vol -= self.volumeStep
+		if vol < self.volumeConstraints[0]: vol = self.volumeConstraints[0]
+		util.setSetting('{0}.{1}'.format('volume',self.provider),vol)
+		if util.DEBUG: util.LOG('Volume DOWN: {0}'.format(vol))
+		return u'{0} {1}'.format(vol,self.volumeSuffix)
+
 	def flagAsDead(self,reason=''):
 		self.dead = True
 		self.deadReason = reason or self.deadReason
