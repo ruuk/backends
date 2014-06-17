@@ -26,7 +26,11 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
 	provider = 'Speech-Dispatcher'
 	displayName = 'Speech Dispatcher'
 	interval = 100
-	settings = {	'module':None,
+	volumeConstraints = (0,100,100,True)
+	volumeStep = 5
+	volumeSuffix = '%'
+	settings = {	
+					'module':None,
 					'voice':None,
 					'speed':0,
 					'pitch':0,

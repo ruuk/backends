@@ -18,7 +18,8 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 	speedConstraints = (-10,0,10,True)
 	pitchConstraints = (-10,0,10,True)
 	volumeConstraints = (0,100,200,True)
-	
+	volumeStep = 5
+	volumeSuffix = '%'
 	baseSSML = u'''<?xml version="1.0"?>
 <speak version="1.0"
          xmlns="http://www.w3.org/2001/10/synthesis"

@@ -8,6 +8,9 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 	displayName = 'OSX Say (OSX Internal)'
 	canStreamWav = True
 	interval = 100
+	volumeConstraints = (0,100,100,True)
+	volumeStep = 5
+	volumeSuffix = '%'
 	voicesPath = os.path.join(util.configDirectory(),'{0}.voices'.format(provider))
 	settings = {	'voice':'',
 					'volume':100,
