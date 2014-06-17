@@ -20,6 +20,7 @@ class TTSBackendBase(object):
 	speedConstraints = (0,0,0,True)
 	pitchConstraints = (0,0,0,True)
 	volumeConstraints = (-12,0,12,True)
+	volumeExternalEndpoints = (-12,12)
 	volumeStep = 1
 	volumeSuffix = 'dB'
 	speedInt = True
@@ -77,7 +78,7 @@ class TTSBackendBase(object):
 		if not self.settings or not 'volume' in self.settings: return u'Cannot adjust volume'
 		vol = self.setting('volume')
 		vol += self.volumeStep
-		if vol > self.volumeConstraints[2]: vol = self.volumeConstraints[2]
+		if vol > self.volumeExternalEndpoints[1]: vol = self.volumeExternalEndpoints[1]
 		util.setSetting('{0}.{1}'.format('volume',self.provider),vol)
 		if util.DEBUG: util.LOG('Volume UP: {0}'.format(vol))
 		return u'{0} {1}'.format(vol,self.volumeSuffix)
@@ -86,7 +87,7 @@ class TTSBackendBase(object):
 		if not self.settings or not 'volume' in self.settings: return u'Cannot adjust volume'
 		vol = self.setting('volume')
 		vol -= self.volumeStep
-		if vol < self.volumeConstraints[0]: vol = self.volumeConstraints[0]
+		if vol < self.volumeExternalEndpoints[0]: vol = self.volumeExternalEndpoints[0]
 		util.setSetting('{0}.{1}'.format('volume',self.provider),vol)
 		if util.DEBUG: util.LOG('Volume DOWN: {0}'.format(vol))
 		return u'{0} {1}'.format(vol,self.volumeSuffix)
@@ -180,7 +181,7 @@ class TTSBackendBase(object):
 
 	def _update(self):
 		changed = self._updateSettings()
-		if changed: self.update()
+		if changed: return self.update()
 
 	def _updateSettings(self):
 		if not self.settings: return None

@@ -17,7 +17,8 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 	interval = 100
 	speedConstraints = (-10,0,10,True)
 	pitchConstraints = (-10,0,10,True)
-	volumeConstraints = (0,100,200,True)
+	volumeConstraints = (0,100,100,True)
+	volumeExternalEndpoints = (0,100)
 	volumeStep = 5
 	volumeSuffix = '%'
 	baseSSML = u'''<?xml version="1.0"?>

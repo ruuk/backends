@@ -26,7 +26,8 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
 	provider = 'Speech-Dispatcher'
 	displayName = 'Speech Dispatcher'
 	interval = 100
-	volumeConstraints = (0,100,100,True)
+	volumeConstraints = (-100,0,100,True)
+	volumeExternalEndpoints = (0,200)
 	volumeStep = 5
 	volumeSuffix = '%'
 	settings = {	
@@ -38,6 +39,7 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
 	}
 
 	def init(self):
+		self.updateMessage = None
 		self.connect()
 
 	def connect(self):
@@ -69,16 +71,35 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
 			util.LOG('Speech-Dispatcher reconnecting...')
 			self.connect()
 			
+	def volumeUp(self):
+		#Override because returning the message (which causes speech) causes the backend to hang, not sure why... threading issue?
+		self.updateMessage = ThreadedTTSBackend.volumeUp(self)
+
+	def volumeDown(self):
+		#Override because returning the message (which causes speech) causes the backend to hang, not sure why... threading issue?
+		self.updateMessage = ThreadedTTSBackend.volumeDown(self)
+		
+	def getUpdateMessage(self):
+		msg = self.updateMessage
+		self.updateMessage = None
+		return msg
+
 	def update(self):
-		module = self.setting('module')
-		if module: self.speechdObject.set_output_module(module)
-		voice = self.setting('voice')
-		if voice:
-			self.speechdObject.set_language(self.getVoiceLanguage(voice))
-			self.speechdObject.set_synthesis_voice(voice)
-		self.speechdObject.set_rate(self.setting('speed'))
-		self.speechdObject.set_pitch(self.setting('pitch'))
-		self.speechdObject.set_volume( (self.setting('volume') * 2) - 100 ) #Covert from % to (-100 to 100)
+		try:
+			module = self.setting('module')
+			if module: self.speechdObject.set_output_module(module)
+			voice = self.setting('voice')
+			if voice:
+				self.speechdObject.set_language(self.getVoiceLanguage(voice))
+				self.speechdObject.set_synthesis_voice(voice)
+			self.speechdObject.set_rate(self.setting('speed'))
+			self.speechdObject.set_pitch(self.setting('pitch'))
+			vol = self.setting('volume')
+			self.speechdObject.set_volume(vol - 100) #Covert from % to (-100 to 100)
+		except speechd.SSIPCommunicationError:
+			util.ERROR('SpeechDispatcherTTSBackend.update()',hide_tb=True)
+		msg = self.getUpdateMessage()
+		if msg: self.say(msg,interrupt=True)
 
 	def getVoiceLanguage(self,voice):
 		res = None
