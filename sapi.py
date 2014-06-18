@@ -44,14 +44,22 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		self.update()
 		
 	def resetSAPI(self):
+		self.flags = 137
+		self.streamFlags = 136
 		self.SpVoice = self.comtypesClient.CreateObject("SAPI.SpVoice")
+		try:
+			self.SpVoice.Speak('',self.flags)
+		except self.COMError:
+			if util.DEBUG: util.LOG('SAPI: XP Detected - changing flags')
+			self.flags = 1
+			self.streamFlags = 2
 		
 	def runCommand(self,text,outFile):
 		if not self.SpVoice: return
 		stream = self.comtypesClient.CreateObject("SAPI.SpFileStream")
 		stream.Open(outFile, 3) #3=SSFMCreateForWrite
 		ssml = self.ssml.format(text=saxutils.escape(text))
-		self.SpVoice.Speak(ssml,0)
+		self.SpVoice.Speak(ssml,self.streamFlags)
 		stream.close()
 		return True
 
@@ -59,14 +67,14 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		if not self.SpVoice: return
 		ssml = self.ssml.format(text=saxutils.escape(text))
 		try:
-			self.SpVoice.Speak(ssml,1)
+			self.SpVoice.Speak(ssml,self.flags)
 		except self.COMError:
-			util.ERROR('COMError: RESETTING SAPI',hide_tb=True)
+			util.ERROR('SAPI: COMError: RESETTING',hide_tb=True)
 			self.resetSAPI()
 			try:
-				self.SpVoice.Speak(ssml,1)
+				self.SpVoice.Speak(ssml,self.flags)
 			except self.COMError:
-				util.ERROR('COMError: SAPI Failed after reset')
+				util.ERROR('SAPI: COMError: Failed after reset')
 		
 	def getWavStream(self,text):
 		fmt = self.comtypesClient.CreateObject("SAPI.SpAudioFormat")
@@ -77,7 +85,7 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		self.SpVoice.AudioOutputStream = stream
 		
 		ssml = self.ssml.format(text=saxutils.escape(text))
-		self.SpVoice.Speak(ssml,0)
+		self.SpVoice.Speak(ssml,self.streamFlags)
 		
 		wavIO = StringIO.StringIO()
 		self.createWavFileObject(wavIO,stream)
