@@ -39,7 +39,10 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		try:
 			from comtypes.client._code_cache import _find_gen_dir
 			gen = _find_gen_dir()
-			map( os.remove, [os.path.join( gen,f) for f in os.listdir(gen)] )
+			import stat, shutil
+			os.chmod(gen,stat.S_IWRITE)
+			shutil.rmtree(gen,ignore_errors=True)
+			os.makedirs(gen)
 		except:
 			util.ERROR('Failed to empty comtypes gen dir')
 
