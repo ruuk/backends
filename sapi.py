@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys, wave, array, StringIO
+import os, sys, wave, array, StringIO
 from base import SimpleTTSBackendBase
 from lib import util
 from xml.sax import saxutils
@@ -36,6 +36,13 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 	
 	def init(self):
 		self.SpVoice = None
+		try:
+			from comtypes.client._code_cache import _find_gen_dir
+			gen = _find_gen_dir()
+			map( os.remove, [os.path.join( gen,f) for f in os.listdir(gen)] )
+		except:
+			util.ERROR('Failed to empty comtypes gen dir')
+
 		import comtypes.client
 		from _ctypes import COMError
 		self.comtypesClient = comtypes.client
