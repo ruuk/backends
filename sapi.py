@@ -59,11 +59,27 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		self.SpVoice = self.comtypesClient.CreateObject("SAPI.SpVoice")
 		try:
 			self.SpVoice.Speak('',self.flags)
-		except self.COMError:
-			if util.DEBUG: util.LOG('SAPI: XP Detected - changing flags')
+		except self.COMError,e:
+			if util.DEBUG:
+				self.logSAPIError(e)
+				util.LOG('SAPI: XP Detected - changing flags')
 			self.flags = 1
 			self.streamFlags = 2
 		
+	def logSAPIError(self,com_error):
+		try:
+			errno = str(com_error.hresult)
+			with open(os.path.join(util.backendsDirectory(),'sapi_comerrors.txt'),'r') as f:
+				lines = f.read().splitlines()
+			for l1,l2 in zip(lines[0::2],lines[1::2]):
+				bits = l1.split()
+				if errno in bits:
+					return util.LOG('SAPI Comtypes error ({0})[{1}]: {2}'.format(errno,bits[0],l2 or '?'))
+		except:
+			pass
+
+		util.ERROR('Error getting SAPI error: {0}'.format(com_error))
+
 	def runCommand(self,text,outFile):
 		if not self.SpVoice: return
 		stream = self.comtypesClient.CreateObject("SAPI.SpFileStream")
@@ -78,13 +94,15 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 		ssml = self.ssml.format(text=saxutils.escape(text))
 		try:
 			self.SpVoice.Speak(ssml,self.flags)
-		except self.COMError:
+		except self.COMError,e:
 			util.ERROR('SAPI: COMError: RESETTING',hide_tb=True)
+			self.logSAPIError(e)
 			self.resetSAPI()
 			try:
 				self.SpVoice.Speak(ssml,self.flags)
-			except self.COMError:
-				util.ERROR('SAPI: COMError: Failed after reset')
+			except self.COMError,e:
+				util.LOG('SAPI: COMError: Failed after reset')
+				self.logSAPIError(e)
 		
 	def getWavStream(self,text):
 		fmt = self.comtypesClient.CreateObject("SAPI.SpAudioFormat")
@@ -110,7 +128,11 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 
 	def stop(self):
 		if not self.SpVoice: return
-		if not self.inWavStreamMode: self.SpVoice.Speak('',3)
+		if not self.inWavStreamMode:
+			try:
+				self.SpVoice.Speak('',3)
+			except self.COMError, e:
+				self.logSAPIError(e)
 		
 	def update(self):
 		self.setMode(self.getMode())
@@ -143,8 +165,8 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 			for i in xrange(len(v)):
 				try:
 					name=v[i].GetDescription()
-				except COMError: #analysis:ignore
-					pass
+				except COMError,e: #analysis:ignore
+					self.logSAPIError(e)
 				voices.append((name,name))
 			return voices
 
