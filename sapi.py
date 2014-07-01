@@ -74,11 +74,13 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 			for l1,l2 in zip(lines[0::2],lines[1::2]):
 				bits = l1.split()
 				if errno in bits:
-					return util.LOG('SAPI Comtypes error ({0})[{1}]: {2}'.format(errno,bits[0],l2 or '?'))
+					util.LOG('SAPI Comtypes error ({0})[{1}]: {2}'.format(errno,bits[0],l2 or '?'))
+					break
 		except:
-			pass
+			util.ERROR('Error looking up SAPI error: {0}'.format(com_error))
+		util.LOG('Failed to lookup SAPI error: {0}'.format(com_error))
+		util.LOG('Line: {1} In: {0}'.format(sys.exc_info()[2].tb_frame.f_code.co_name, sys.exc_info()[2].tb_lineno))
 
-		util.ERROR('Error getting SAPI error: {0}'.format(com_error))
 
 	def runCommand(self,text,outFile):
 		if not self.SpVoice: return
