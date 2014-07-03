@@ -57,8 +57,7 @@ class SAPI():
 
 	def cleanComtypes(self): #TODO: Make this SAPI specific?
 		try:
-			from comtypes.client._code_cache import _find_gen_dir
-			gen = _find_gen_dir()
+			gen = os.path.join(util.backendsDirectory(),'comtypes','gen')
 			import stat, shutil
 			os.chmod(gen,stat.S_IWRITE)
 			shutil.rmtree(gen,ignore_errors=True)
@@ -113,7 +112,7 @@ class SAPI():
 		
 	@checkSpVoice
 	def stopSpeech(self):
-		self.sapi.SpVoice_Speak('',3)
+		self.SpVoice_Speak('',3)
 
 	def SpFileStream(self):
 		return self.comtypesClient.CreateObject("SAPI.SpFileStream")
@@ -232,15 +231,15 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 	
 	@classmethod
 	def settingList(cls,setting,*args):
-		self = cls()
+		sapi = SAPI()
 		if setting == 'voice':
 			voices=[]
-			v=self.sapi.SpVoice_GetVoices()
+			v=sapi.SpVoice_GetVoices()
 			for i in xrange(len(v)):
 				try:
 					name=v[i].GetDescription()
 				except COMError,e: #analysis:ignore
-					self.sapi.logSAPIError(e)
+					sapi.logSAPIError(e)
 				voices.append((name,name))
 			return voices
 
