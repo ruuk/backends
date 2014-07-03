@@ -7,12 +7,18 @@ from xml.sax import saxutils
 
 class SAPI():
 	def __init__(self):
+		self.valid = True
 		try:
 			self.reset()
 		except:
-			util.LOG('SAPI: Initialization failed: retrying...')
+			util.ERROR('SAPI: Initialization failed: retrying...')
 			xbmc.sleep(1000) #May not be necessary, but here it is
-			self.reset()
+			try:
+				self.reset()
+			except:
+				util.ERROR('SAPI: Initialization failed: Giving up.')
+				self.valid = False
+				return
 		self.setStreamFlags()
 
 	def importComtypes(self):
@@ -156,6 +162,9 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 	
 	def init(self):
 		self.sapi = SAPI()
+		if not self.sapi.valid:
+			self.dead = True
+			return
 		self.update()
 
 	def runCommand(self,text,outFile):
