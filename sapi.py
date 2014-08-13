@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-import os, sys, wave, array, StringIO, importlib
+import os, sys, wave, array, StringIO
+try:
+	import importlib
+	importHelper = importlib.import_module
+except ImportError:
+	importHelper = __import__
+
 import xbmc
 from base import SimpleTTSBackendBase
 from lib import util
@@ -47,7 +53,7 @@ class SAPI():
 				util.ERROR('SAPI: Initialization failed: Giving up.')
 				return
 		self.valid = True
-		self.COMError = importlib.import_module('_ctypes').COMError
+		self.COMError = importHelper('_ctypes').COMError
 		self.setStreamFlags()
 
 	def importComtypes(self):
@@ -59,7 +65,7 @@ class SAPI():
 		import gc
 		gc.collect()
 		#and then import
-		self.comtypesClient = importlib.import_module('comtypes.client')
+		self.comtypesClient = importHelper('comtypes.client')
 		
 	
 	def reset(self):
