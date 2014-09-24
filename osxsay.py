@@ -13,7 +13,8 @@ class OSXSayTTSBackend(ThreadedTTSBackend):
 	volumeStep = 5
 	volumeSuffix = '%'
 	voicesPath = os.path.join(util.configDirectory(),'{0}.voices'.format(provider))
-	settings = {	'voice':'',
+	settings = {	
+					'voice':'',
 					'volume':100,
 					'speed':0
 	}

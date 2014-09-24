@@ -46,7 +46,8 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
 	canStreamWav = util.commandIsAvailable('mpg123')
 	interval = 100
 	playerClass = audio.MP3AudioPlayerHandler
-	settings = {	'language':'en',
+	settings = {
+					'language':'en',
 					'player':'mpg123',
 					'volume':0,
 					'pipe':False
