@@ -225,25 +225,25 @@ NSPageUpFunctionKey   = 0xF72C
 NSPageDownFunctionKey = 0xF72D
 
 # /System/Library/Frameworks/AppKit.framework/Headers/NSWindow.h
-NSBorderlessWindowMask		= 0
-NSTitledWindowMask		= 1 << 0
-NSClosableWindowMask		= 1 << 1
-NSMiniaturizableWindowMask	= 1 << 2
-NSResizableWindowMask		= 1 << 3
+NSBorderlessWindowMask        = 0
+NSTitledWindowMask        = 1 << 0
+NSClosableWindowMask        = 1 << 1
+NSMiniaturizableWindowMask    = 1 << 2
+NSResizableWindowMask        = 1 << 3
 
 # /System/Library/Frameworks/AppKit.framework/Headers/NSPanel.h
-NSUtilityWindowMask		= 1 << 4
+NSUtilityWindowMask        = 1 << 4
 
 # /System/Library/Frameworks/AppKit.framework/Headers/NSGraphics.h
-NSBackingStoreRetained	        = 0
-NSBackingStoreNonretained	= 1
-NSBackingStoreBuffered	        = 2
+NSBackingStoreRetained            = 0
+NSBackingStoreNonretained    = 1
+NSBackingStoreBuffered            = 2
 
 # /System/Library/Frameworks/AppKit.framework/Headers/NSTrackingArea.h
 NSTrackingMouseEnteredAndExited  = 0x01
 NSTrackingMouseMoved             = 0x02
-NSTrackingCursorUpdate 		 = 0x04
-NSTrackingActiveInActiveApp 	 = 0x40
+NSTrackingCursorUpdate          = 0x04
+NSTrackingActiveInActiveApp      = 0x40
 
 # /System/Library/Frameworks/AppKit.framework/Headers/NSOpenGL.h
 NSOpenGLPFAAllRenderers       =   1   # choose from all available renderers          
