@@ -75,7 +75,7 @@ class TTSBackendBase(object):
         return new
     
     def volumeUp(self):
-        if not self.settings or not 'volume' in self.settings: return u'Cannot adjust volume'
+        if not self.settings or not 'volume' in self.settings: return util.T(32180)
         vol = self.setting('volume')
         vol += self.volumeStep
         if vol > self.volumeExternalEndpoints[1]: vol = self.volumeExternalEndpoints[1]
@@ -84,7 +84,7 @@ class TTSBackendBase(object):
         return u'{0} {1}'.format(vol,self.volumeSuffix)
 
     def volumeDown(self):
-        if not self.settings or not 'volume' in self.settings: return u'Cannot adjust volume'
+        if not self.settings or not 'volume' in self.settings: return util.T(32180)
         vol = self.setting('volume')
         vol -= self.volumeStep
         if vol < self.volumeExternalEndpoints[0]: vol = self.volumeExternalEndpoints[0]
