@@ -25,7 +25,10 @@ def check_snd_bm2835():
     return False
 
 def load_snd_bm2835():
-    if not xbmc or not xbmc.getCondVisibility('System.Platform.Linux.RaspberryPi'): return
+    try:
+        if not xbmc or not xbmc.getCondVisibility('System.Platform.Linux.RaspberryPi'): return
+    except: #Handles the case where there is an xbmc module installed system wide and we're not running xbmc
+        return
     if check_snd_bm2835(): return
     import getpass
     #TODO: Maybe use util.raspberryPiDistro() to confirm distro
