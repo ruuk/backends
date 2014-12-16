@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import audio
 import base
 import subprocess
 import ctypes
@@ -33,7 +32,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
         if self.pitch: args.extend(('-p',str(self.pitch)))
         if self.volume != 100: args.extend(('-a',str(self.volume)))
         args.append(text.encode('utf-8'))
-        
+
     def runCommand(self,text,outFile):
         args = ['espeak','-w',outFile]
         self.addCommonArgs(args,text)
@@ -51,7 +50,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
         self.addCommonArgs(args,text)
         self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
         return self.process.stdout
-        
+
     def update(self):
         self.setPlayer(self.setting('player'))
         self.setMode(self.getMode())
@@ -75,7 +74,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
             self.process.terminate()
         except:
             pass
-    
+
     @classmethod
     def settingList(cls,setting,*args):
         if setting == 'voice':
@@ -88,7 +87,7 @@ class ESpeakTTSBackend(base.SimpleTTSBackendBase):
                 ret.append((voice,voice))
             return ret
         return None
-        
+
     @staticmethod
     def available():
         try:
@@ -118,13 +117,19 @@ class ESpeakCtypesTTSBackend(base.TTSBackendBase):
     interval = 100
     settings = {'voice':''}
     broken = True
-    
-    def __init__(self):
+    _eSpeak = None
+
+    @property
+    def eSpeak(self):
+        if ESpeakCtypesTTSBackend._eSpeak: return ESpeakCtypesTTSBackend._eSpeak
         libname = ctypes.util.find_library('espeak')
-        self.eSpeak = ctypes.cdll.LoadLibrary(libname)
-        self.eSpeak.espeak_Initialize(0,0,None,0)
+        ESpeakCtypesTTSBackend._eSpeak = ctypes.cdll.LoadLibrary(libname)
+        ESpeakCtypesTTSBackend._eSpeak.espeak_Initialize(0,0,None,0)
+        return ESpeakCtypesTTSBackend._eSpeak
+
+    def __init__(self):
         self.voice = self.setting('voice')
-        
+
     def say(self,text,interrupt=False):
         if not self.eSpeak: return
         if self.voice: self.eSpeak.espeak_SetVoiceByName(self.voice)
@@ -136,31 +141,36 @@ class ESpeakCtypesTTSBackend(base.TTSBackendBase):
 
     def update(self):
         self.voice = self.setting('voice')
-    
+
     def stop(self):
         if not self.eSpeak: return
         self.eSpeak.espeak_Cancel()
-        
+
     def close(self):
         if not self.eSpeak: return
-        self.eSpeak.espeak_Terminate()
+        #self.eSpeak.espeak_Terminate() #TODO: Removed because broke, uncomment if fixed
         #ctypes.cdll.LoadLibrary('libdl.so').dlclose(self.eSpeak._handle)
-        del self.eSpeak
-        self.eSpeak = None
-        
-        
-        
+        #del self.eSpeak #TODO: Removed because broke, uncomment if fixed
+        #self.eSpeak = None #TODO: Removed because broke, uncomment if fixed
+
+
+
     @staticmethod
     def available():
         return bool(ctypes.util.find_library('espeak'))
 
-    def voices(self):
-        voices=self.eSpeak.espeak_ListVoices(None)
-        aespeak_VOICE=ctypes.POINTER(ctypes.POINTER(espeak_VOICE))
-        pvoices=ctypes.cast(voices,aespeak_VOICE)
-        voiceList=[]
-        index=0
-        while pvoices[index]:
-            voiceList.append(os.path.basename(pvoices[index].contents.identifier))
-            index+=1
-        return voiceList
+    @classmethod
+    def settingList(cls,setting,*args):
+        return None
+        if setting == 'voice':
+            if not ESpeakCtypesTTSBackend._eSpeak: return None
+            voices=ESpeakCtypesTTSBackend._eSpeak.espeak_ListVoices(None)
+            aespeak_VOICE=ctypes.POINTER(ctypes.POINTER(espeak_VOICE))
+            pvoices=ctypes.cast(voices,aespeak_VOICE)
+            voiceList=[]
+            index=0
+            while pvoices[index]:
+                voiceList.append(os.path.basename(pvoices[index].contents.identifier))
+                index+=1
+            return voiceList
+        return None
