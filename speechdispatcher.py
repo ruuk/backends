@@ -19,18 +19,17 @@ def getSpeechDSpeaker(test=False):
         except:
             if not test: util.ERROR('Speech-Dispatcher: failed to create Speaker',hide_tb=True)
     return None
-    
+
 class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
     """Supports The speech-dispatcher on linux"""
 
     provider = 'Speech-Dispatcher'
     displayName = 'Speech Dispatcher'
-    interval = 100
     volumeConstraints = (-100,0,100,True)
     volumeExternalEndpoints = (0,200)
     volumeStep = 5
     volumeSuffix = '%'
-    settings = {    
+    settings = {
                     'module':None,
                     'voice':None,
                     'speed':0,
@@ -70,7 +69,7 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
         if self.active:
             util.LOG('Speech-Dispatcher reconnecting...')
             self.connect()
-            
+
     def volumeUp(self):
         #Override because returning the message (which causes speech) causes the backend to hang, not sure why... threading issue?
         self.updateMessage = ThreadedTTSBackend.volumeUp(self)
@@ -78,7 +77,7 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
     def volumeDown(self):
         #Override because returning the message (which causes speech) causes the backend to hang, not sure why... threading issue?
         self.updateMessage = ThreadedTTSBackend.volumeDown(self)
-        
+
     def getUpdateMessage(self):
         msg = self.updateMessage
         self.updateMessage = None
@@ -120,12 +119,12 @@ class SpeechDispatcherTTSBackend(ThreadedTTSBackend):
             return [(v[0],v[0]) for v in voices]
         elif setting == 'module':
             return [(m,m) for m in so.list_output_modules()]
-            
+
     def close(self):
         if self.speechdObject: self.speechdObject.close()
         del self.speechdObject
         self.speechdObject = None
-        
+
     @staticmethod
     def available():
         return bool(getSpeechDSpeaker(test=True))

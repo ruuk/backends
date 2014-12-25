@@ -12,8 +12,7 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
     ttsURL = 'http://speechutil.com/convert/wav?text={0}'
     headers = { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36' }
     canStreamWav = True
-    interval = 100
-    
+
     def init(self):
         self.process = None
 
@@ -37,7 +36,7 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
         except:
             util.ERROR('Failed to open speechutil.com TTS URL',hide_tb=True)
             return False
-            
+
         with open(outFile,'wb') as out:
             shutil.copyfileobj(resp,out)
         return True
@@ -46,10 +45,10 @@ class SpeechUtilComTTSBackend(base.SimpleTTSBackendBase):
         wav_path = os.path.join(util.getTmpfs(),'speech.wav')
         if not self.runCommand(text,wav_path): return None
         return open(wav_path,'rb')
-            
+
     def stop(self):
         asyncconnections.StopConnection()
-        
+
     @staticmethod
     def available():
         return audio.WavAudioPlayerHandler.canPlay()

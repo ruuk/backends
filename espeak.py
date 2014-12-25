@@ -10,10 +10,9 @@ from lib import util
 class ESpeakTTSBackend(base.SimpleTTSBackendBase):
     provider = 'eSpeak'
     displayName = 'eSpeak'
-    interval = 100
     speedConstraints = (80,175,450,True)
     pitchConstraints = (0,50,99,True)
-    settings = {        'voice':'',
+    settings = {    'voice':'',
                     'speed':0,
                     'pitch':0,
                     'output_via_espeak':False,
@@ -114,7 +113,6 @@ class espeak_VOICE(ctypes.Structure):
 class ESpeakCtypesTTSBackend(base.TTSBackendBase):
     provider = 'eSpeak-ctypes'
     displayName = 'eSpeak (ctypes)'
-    interval = 100
     settings = {'voice':''}
     broken = True
     _eSpeak = None

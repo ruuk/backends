@@ -22,7 +22,7 @@ def lookupGenericComError(com_error):
     except:
         pass
     return None
-        
+
 
 class SAPI():
     DEFAULT = 0
@@ -34,7 +34,7 @@ class SAPI():
     PERSIST_XML = 32
     SPEAK_PUNC = 64
     PARSE_SAPI = 128
-    
+
 
     def __init__(self):
         self.SpVoice = None
@@ -66,15 +66,15 @@ class SAPI():
         gc.collect()
         #and then import
         self.comtypesClient = importHelper('comtypes.client')
-        
-    
+
+
     def reset(self):
         del self.SpVoice
         self.SpVoice = None
         self.cleanComtypes()
         self.importComtypes()
         self.resetSpVoice()
-    
+
     def resetSpVoice(self):
         self.SpVoice = self.comtypesClient.CreateObject("SAPI.SpVoice")
         voice = self._getVoice()
@@ -101,7 +101,7 @@ class SAPI():
             if not os.path.exists(gen): os.makedirs(gen)
         except:
             util.ERROR('SAPI: Failed to empty comtypes gen dir')
-        
+
     def logSAPIError(self,com_error,extra=''):
         try:
             errno = str(com_error.hresult)
@@ -158,34 +158,34 @@ class SAPI():
             except:
                 self.valid = False
                 util.ERROR('SAPI: {0} error'.format(func.__name__))
-            
+
         return checker
 
     #Wrapped SAPI methods
     @checkSAPI
     def SpVoice_Speak(self,ssml,flags):
         return self.SpVoice.Speak(ssml,flags)
-    
+
     @checkSAPI
     def SpVoice_GetVoices(self):
         return self.SpVoice.getVoices()
-        
+
     @checkSAPI
     def stopSpeech(self):
         self.SpVoice.Speak('',self.ASYNC | self.PURGE_BEFORE_SPEAK)
-        
+
     @checkSAPI
     def SpFileStream(self):
         return self.comtypesClient.CreateObject("SAPI.SpFileStream")
-        
+
     @checkSAPI
     def SpAudioFormat(self):
         return self.comtypesClient.CreateObject("SAPI.SpAudioFormat")
-        
+
     @checkSAPI
     def SpMemoryStream(self):
         return self.comtypesClient.CreateObject("SAPI.SpMemoryStream")
-        
+
     def validCheck(func):
         def checker(self,*args,**kwargs):
             if not self.valid:
@@ -199,11 +199,11 @@ class SAPI():
         self._voiceName = voice_name
         voice = self._getVoice(voice_name)
         self.SpVoice.Voice = voice
-        
+
     @validCheck
     def set_SpVoice_AudioOutputStream(self,stream):
         self.SpVoice.AudioOutputStream = stream
-    
+
 class SAPITTSBackend(SimpleTTSBackendBase):
     provider = 'SAPI'
     displayName = 'SAPI (Windows Internal)'
@@ -214,7 +214,6 @@ class SAPITTSBackend(SimpleTTSBackendBase):
                     'volume':100
     }
     canStreamWav = True
-    interval = 100
     speedConstraints = (-10,0,10,True)
     pitchConstraints = (-10,0,10,True)
     volumeConstraints = (0,100,100,True)
@@ -233,7 +232,7 @@ class SAPITTSBackend(SimpleTTSBackendBase):
   <rate absspeed="{speed}" />
   <p>{text}</p>
 </speak>'''
-    
+
     def init(self):
         self.sapi = SAPI()
         if not self.sapi.valid:
@@ -247,7 +246,7 @@ class SAPITTSBackend(SimpleTTSBackendBase):
                 return self.flagAsDead('RESET')
             else:
                 return func(self,*args,**kwargs)
-                
+
         return checker
 
     @sapiValidCheck
@@ -268,25 +267,25 @@ class SAPITTSBackend(SimpleTTSBackendBase):
     def runCommandAndSpeak(self,text):
         ssml = self.ssml.format(text=saxutils.escape(text))
         self.sapi.SpVoice_Speak(ssml,self.sapi.flags)
-        
+
     @sapiValidCheck
     def getWavStream(self,text):
         fmt = self.sapi.SpAudioFormat()
         if not fmt: return None
         fmt.Type = 22
-        
+
         stream = self.sapi.SpMemoryStream()
         if not stream: return None
         stream.Format = fmt
         self.sapi.set_SpVoice_AudioOutputStream(stream)
-        
+
         ssml = self.ssml.format(text=saxutils.escape(text))
         self.sapi.SpVoice_Speak(ssml,self.streamFlags)
-        
+
         wavIO = StringIO.StringIO()
         self.createWavFileObject(wavIO,stream)
         return wavIO
-    
+
     def createWavFileObject(self,wavIO,stream):
         #Write wave via the wave module
         wavFileObj = wave.open(wavIO,'wb')
@@ -298,20 +297,20 @@ class SAPITTSBackend(SimpleTTSBackendBase):
         if not self.sapi: return
         if not self.inWavStreamMode:
             self.sapi.stopSpeech()
-        
+
     def update(self):
         self.setMode(self.getMode())
         self.ssml = self.baseSSML.format(text='{text}',volume=self.setting('volume'),speed=self.setting('speed'),pitch=self.setting('pitch'))
         voice_name = self.setting('voice')
         self.sapi.set_SpVoice_Voice(voice_name)
-        
+
     def getMode(self):
         if self.setting('speak_via_xbmc'):
             return SimpleTTSBackendBase.WAVOUT
         else:
             if self.sapi: self.sapi.set_SpVoice_AudioOutputStream(None)
             return SimpleTTSBackendBase.ENGINESPEAK
-    
+
     @classmethod
     def settingList(cls,setting,*args):
         sapi = SAPI()
@@ -341,7 +340,7 @@ class SAPITTSBackend(SimpleTTSBackendBase):
 #        self.sapi.SpVoice_Speak(text,0)
 #        stream.close()
 #        return open(fpath,'rb')
-        
+
 #    def createWavFileObject(self,wavIO,stream):
 #        #Write wave headers manually
 #        import struct

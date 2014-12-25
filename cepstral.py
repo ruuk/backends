@@ -14,20 +14,19 @@ def getStartupInfo():
         return startupinfo
 
     return None
-            
+
 class CepstralTTSBackend(base.SimpleTTSBackendBase):
     provider = 'Cepstral'
     displayName = 'Cepstral'
-    interval = 100
     canStreamWav = False
     settings = {    'voice':'',
                     'use_aoss':False,
                     'speed':170,
                     'volume':0,
                     'pitch':0
-                    
+
     }
-    
+
     def init(self):
         self.setMode(base.SimpleTTSBackendBase.ENGINESPEAK)
         self.startupinfo = getStartupInfo()
@@ -43,7 +42,7 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
         args.extend(('-p','audio/volume={0},speech/rate={1},speech/pitch/shift={2}'.format(self.volume,self.rate,self.pitch)))
         args.extend(('-f','-'))
         self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdin=subprocess.PIPE, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-        
+
     def stopProcess(self):
         if self.process:
             try:
@@ -68,10 +67,10 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
 
     def stop(self):
         self.restartProcess()
-            
+
     def close(self):
         self.stopProcess()
-    
+
     @classmethod
     def getVoiceLines(cls):
         import re
@@ -81,21 +80,21 @@ class CepstralTTSBackend(base.SimpleTTSBackendBase):
             if l.startswith(' ') or l.startswith('-'): break
             ret.append(re.split('\s+\|\s+',l.strip(),6))
         return ret
-    
-    @classmethod    
+
+    @classmethod
     def voices(cls):
         ret = []
         for v in cls.getVoiceLines():
             voice = v[0]
             ret.append((voice,voice))
         return ret
-            
+
     @classmethod
     def settingList(cls,setting,*args):
         if setting == 'voice':
             return cls.voices()
         return None
-        
+
     @staticmethod
     def available():
         try:

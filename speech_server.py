@@ -7,9 +7,8 @@ import shutil
 class SpeechServerBackend(base.SimpleTTSBackendBase):
     provider = 'ttsd'
     displayName = 'HTTP TTS Server (Requires Running Server)'
-    interval = 100
     canStreamWav = False
-    
+
     settings = {    'engine': None,
                     'voice': None,
                     'voice.Flite': None,
@@ -41,14 +40,14 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
             self.httphost = 'http://{0}:{1}/'.format(host,port)
         else:
             self.httphost = 'http://127.0.0.1:8256/'
-        
+
     def updatePostdata(self,postdata):
         postdata['engine'] = self.engine
         if self.voice: postdata['voice'] = self.voice
         postdata['rate'] = self.remote_speed
         postdata['pitch'] = self.remote_pitch
         postdata['volume'] = self.remote_volume
-        
+
     def runCommand(self,text,outFile):
         postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
         if self.perlServer:
@@ -83,7 +82,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
             if self.failFlag: self.flagAsDead(reason=err) #This is the second fail in a row, mark dead
             self.failFlag = True
             return False
-            
+
     def runCommandAndPipe(self,text):
         postdata = {'text': text.encode('utf-8')} #TODO: This fixes encoding errors for non ascii characters, but I'm not sure if it will work properly for other languages
         if self.perlServer:
@@ -103,8 +102,8 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
             if self.failFlag: self.flagAsDead(reason=err) #This is the second fail in a row, mark dead
             self.failFlag = True
             return False
-        return True    
-    
+        return True
+
     def getMode(self):
         self.serverMode = False
         if self.setting('speak_on_server'):
@@ -114,11 +113,11 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
             return base.SimpleTTSBackendBase.PIPE
         else:
             return base.SimpleTTSBackendBase.WAVOUT
-            
+
     def update(self):
         self.setPlayer(self.setting('player'))
         self.setMode(self.getMode())
-        
+
         self.setHTTPURL()
         self.perlServer = self.setting('perl_server') #Not really currently used
         version = self.getVersion()
@@ -133,7 +132,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
         else:
             util.LOG('No server detected. Flagging as dead.')
             self.flagAsDead(reason=version)
-            
+
         if self.perlServer:
             self.voice = self.setting('voice')
         else:
@@ -146,7 +145,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
         self.setSpeed(self.setting('player_speed'))
         self.remote_volume = self.setting('remote_volume')
         self.setVolume(self.setting('player_volume'))
-        
+
     def getVersion(self):
         req = urllib2.Request(self.httphost + 'version')
         try:
@@ -159,7 +158,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
         except:
             err = util.ERROR('Failed to get speech.server version',hide_tb=True)
             return err
-        
+
     def serverStop(self):
         req = urllib2.Request(self.httphost + 'stop', '')
         try:
@@ -198,7 +197,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
                 util.ERROR('SpeechServerBackend: engines',hide_tb=True)
                 self.failFlag = True
                 return None
-                
+
             ret = []
             for e in engines:
                 ret.append(e.split('.',1))
@@ -212,7 +211,7 @@ class SpeechServerBackend(base.SimpleTTSBackendBase):
                 ret.append((v,v))
             return ret
         return None
-    
+
     @staticmethod
     def available():
         return True

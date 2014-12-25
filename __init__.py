@@ -18,8 +18,27 @@ from speech_server import SpeechServerBackend
 from cepstral import CepstralTTSBackend
 from google import GoogleTTSBackend
 from speechutil import SpeechUtilComTTSBackend
+from recite import ReciteTTSBackend
+#from voiceover import VoiceOverBackend #Can't test
 
-backendsByPriority = [JAWSTTSBackend,NVDATTSBackend,SAPITTSBackend,ESpeakTTSBackend,FliteTTSBackend,Pico2WaveTTSBackend,FestivalTTSBackend,CepstralTTSBackend,SpeechDispatcherTTSBackend,OSXSayTTSBackend,SpeechServerBackend,GoogleTTSBackend,SpeechUtilComTTSBackend,ESpeakCtypesTTSBackend,LogOnlyTTSBackend]
+backendsByPriority = [  JAWSTTSBackend,
+                        NVDATTSBackend,
+                        SAPITTSBackend,
+                        ESpeakTTSBackend,
+                        FliteTTSBackend,
+                        Pico2WaveTTSBackend,
+                        FestivalTTSBackend,
+                        CepstralTTSBackend,
+                        SpeechDispatcherTTSBackend,
+                        OSXSayTTSBackend,
+#                        VoiceOverBackend,
+                        SpeechServerBackend,
+                        ReciteTTSBackend,
+                        GoogleTTSBackend,
+                        SpeechUtilComTTSBackend,
+                        ESpeakCtypesTTSBackend,
+                        LogOnlyTTSBackend
+]
 
 def removeBackendsByProvider(to_remove):
     rem = []
@@ -35,10 +54,10 @@ def getAvailableBackends(can_stream_wav=False):
         if can_stream_wav and not b.canStreamWav: continue
         available.append(b)
     return available
-            
+
 def getBackendFallback():
     if util.isATV2():
-        return FliteTTSBackend 
+        return FliteTTSBackend
     elif util.isWindows():
         return SAPITTSBackend
     elif util.isOSX():
@@ -48,21 +67,21 @@ def getBackendFallback():
     for b in backendsByPriority:
         if b._available(): return b
     return None
-    
+
 def getVoices(provider):
     voices = None
     bClass = getBackendByProvider(provider)
     if bClass:
         voices = bClass.voices()
     return voices
-    
+
 def getLanguages(provider):
     languages = None
     bClass = getBackendByProvider(provider)
     if bClass:
         with bClass() as b: languages = b.languages()
     return languages
-    
+
 def getSettingsList(provider,setting,*args):
     settings = None
     bClass = getBackendByProvider(provider)
@@ -76,7 +95,7 @@ def getPlayers(provider):
     if bClass and hasattr(bClass,'players'):
         players = bClass.players()
     return players
-        
+
 def getBackend(provider='auto'):
     provider = util.getSetting('backend') or provider
     b = getBackendByProvider(provider)
@@ -91,7 +110,7 @@ def getWavStreamBackend(provider='auto'):
          for b in backendsByPriority:
             if b._available() and b.canStreamWav: break
     return b
-    
+
 def getBackendByProvider(name):
     if name == 'auto': return None
     for b in backendsByPriority:

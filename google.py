@@ -38,13 +38,12 @@ LANGUAGES = [    ('af', 'Afrikaans'),
                 ('vi', 'Vietnamese'),
                 ('cy', 'Welsh')
 ]
-                
+
 class GoogleTTSBackend(base.SimpleTTSBackendBase):
     provider = 'Google'
     displayName = 'Google'
     ttsURL = 'http://translate.google.com/translate_tts?tl={0}&q={1}'
     canStreamWav = util.commandIsAvailable('mpg123')
-    interval = 100
     playerClass = audio.MP3AudioPlayerHandler
     settings = {
                     'language':'en',
@@ -52,7 +51,7 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
                     'volume':0,
                     'pipe':False
     }
-    
+
     def init(self):
         self.process = None
         self.update()
@@ -79,7 +78,7 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
         except:
             util.ERROR('Failed to open Google TTS URL',hide_tb=True)
             return False
-            
+
         with open(outFile,'wb') as out:
             shutil.copyfileobj(resp,out)
         return True
@@ -99,10 +98,10 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
         mp3_path = os.path.join(util.getTmpfs(),'speech.mp3')
         self.runCommand(text,mp3_path)
         self.process = subprocess.Popen(['mpg123','-w',wav_path,mp3_path],stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-        while self.process.poll() == None and self.active: util.sleep(10)    
+        while self.process.poll() == None and self.active: util.sleep(10)
         os.remove(mp3_path)
         return open(wav_path,'rb')
-        
+
     def update(self):
         self.language = self.setting('language')
         self.setPlayer(self.setting('player'))
@@ -114,7 +113,7 @@ class GoogleTTSBackend(base.SimpleTTSBackendBase):
             return base.SimpleTTSBackendBase.PIPE
         else:
             return base.SimpleTTSBackendBase.WAVOUT
-            
+
     def stop(self):
         if not self.process: return
         try:

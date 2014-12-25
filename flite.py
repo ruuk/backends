@@ -12,24 +12,23 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
                     'volume':0,
                     'output_via_flite':False
     }
-    interval = 100
     onATV2 = util.isATV2()
-    
+
     def init(self):
         self.process = None
         self.update()
-        
+
     def runCommand(self,text,outFile):
         if self.onATV2:
             os.system('flite -t "{0}" -o "{1}"'.format(text.encode('utf-8'),outFile))
         else:
             subprocess.call(['flite', '-voice', self.voice, '-t', text.encode('utf-8'),'-o',outFile])
         return True
-        
+
     def runCommandAndSpeak(self,text):
         self.process = subprocess.Popen(['flite', '-voice', self.voice, '-t', text.encode('utf-8')])
         while self.process.poll() == None and self.active: util.sleep(10)
-        
+
     def update(self):
         self.voice = self.setting('voice')
         self.setMode(self.getMode())
@@ -42,7 +41,7 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
             return base.SimpleTTSBackendBase.ENGINESPEAK
         else:
             return base.SimpleTTSBackendBase.WAVOUT
-            
+
     def stop(self):
         if not self.process: return
         try:
@@ -55,7 +54,7 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
         if cls.onATV2: return None
         if setting == 'voice':
             return [(v,v) for v in subprocess.check_output(['flite','-lv']).split(': ',1)[-1].strip().split(' ')]
-        
+
     @staticmethod
     def available():
         try:
@@ -78,8 +77,8 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 #    def say(self,text,interrupt=False):
 #        if not text: return
 #        self.flite.flite_text_to_speech(text,self.voice,'play')
-#        
-#        
+#
+#
 #    @staticmethod
 #    def available():
 #        try:
@@ -88,7 +87,7 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 #        except (OSError, IOError):
 #            return False
 #        return True
-        
+
 #class FliteTTSBackend(TTSBackendBase):
 #    provider = 'Flite'
 #
@@ -96,10 +95,10 @@ class FliteTTSBackend(base.SimpleTTSBackendBase):
 #        if not text: return
 #        voice = self.currentVoice() or 'kal16'
 #        subprocess.call(['flite', '-voice', voice, '-t', text])
-#        
+#
 #    def voices(self):
 #        return subprocess.check_output(['flite','-lv']).split(': ',1)[-1].strip().split(' ')
-#        
+#
 #    @staticmethod
 #    def available():
 #        try:
