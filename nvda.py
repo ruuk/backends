@@ -1,9 +1,21 @@
 # -*- coding: utf-8 -*-
+import xbmc
 import os, ctypes
 from lib import util
 from base import TTSBackendBase
 
-DLL_PATH = os.path.join(util.backendsDirectory(),'nvda','nvdaControllerClient32.dll')
+def getDLLPath():
+    p = os.path.join(util.profileDirectory(),'nvdaControllerClient32.dll')
+    if os.path.exists(p): return p
+    p = os.path.join(util.backendsDirectory(),'nvda','nvdaControllerClient32.dll')
+    if os.path.exists(p): return p
+    if xbmc.getCondVisibility('System.HasAddon(script.module.nvdacontrollerclient)'):
+        if util.DEBUG: util.LOG('Found script.module.nvdacontrollerclient module for NVDA')
+        import xbmcaddon
+        nvdaCCAddon = xbmcaddon.Addon('script.module.nvdacontrollerclient')
+        p = os.path.join(nvdaCCAddon.getAddonInfo('path').decode('utf-8'),'nvda','nvdaControllerClient32.dll')
+        if os.path.exists(p): return p
+    return None
 
 try:
     from ctypes import windll
@@ -16,10 +28,11 @@ class NVDATTSBackend(TTSBackendBase):
 
     @staticmethod
     def available():
-        if not windll:
+        dllPath = getDLLPath()
+        if not dllPath or not windll:
             return False
         try:
-            dll = ctypes.windll.LoadLibrary(DLL_PATH)
+            dll = ctypes.windll.LoadLibrary(dllPath)
             res = dll.nvdaController_testIfRunning() == 0
             ctypes.windll.kernel32.FreeLibrary(dll._handle)
             del dll
@@ -29,7 +42,7 @@ class NVDATTSBackend(TTSBackendBase):
 
     def init(self):
         try:
-            self.dll = ctypes.windll.LoadLibrary(DLL_PATH)
+            self.dll = ctypes.windll.LoadLibrary(getDLLPath())
         except:
             self.dll = None
 
@@ -50,7 +63,7 @@ class NVDATTSBackend(TTSBackendBase):
     def stop(self):
         if not self.dll: return
         self.dll.nvdaController_cancelSpeech()
-        
+
     def close(self):
         if not self.dll: return
         ctypes.windll.kernel32.FreeLibrary(self.dll._handle)
