@@ -6,7 +6,6 @@ try:
 except ImportError:
     importHelper = __import__
 
-import xbmc
 from base import SimpleTTSBackendBase
 from lib import util
 from xml.sax import saxutils
@@ -46,7 +45,7 @@ class SAPI():
             self.reset()
         except:
             util.ERROR('SAPI: Initialization failed: retrying...')
-            xbmc.sleep(1000) #May not be necessary, but here it is
+            util.sleep(1000) #May not be necessary, but here it is
             try:
                 self.reset()
             except:
@@ -146,7 +145,7 @@ class SAPI():
                 util.ERROR('SAPI: {0} error'.format(func.__name__))
             self.valid = False
             util.LOG('SAPI: Resetting...')
-            xbmc.sleep(1000)
+            util.sleep(1000)
             try:
                 self.reset()
                 self.valid = True
