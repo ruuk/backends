@@ -16,7 +16,7 @@ def getDLLPath():
             nvdaCCAddon = xbmcaddon.Addon('script.module.nvdacontrollerclient')
             p = os.path.join(nvdaCCAddon.getAddonInfo('path').decode('utf-8'),'nvda','nvdaControllerClient32.dll')
             if os.path.exists(p): return p
-    except ImportError:
+    except (ImportError,AttributeError):
         return None
     return None
 
