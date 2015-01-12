@@ -7,7 +7,7 @@ try:
     import xbmc
 except:
     xbmc = None
-    
+
 PLAYSFX_HAS_USECACHED = False
 
 try:
@@ -16,7 +16,7 @@ try:
     PLAYSFX_HAS_USECACHED = True
 except:
     pass
-    
+
 def check_snd_bm2835():
     try:
         return 'snd_bcm2835' in subprocess.check_output(['lsmod'])
@@ -46,12 +46,12 @@ def load_snd_bm2835():
 class AudioPlayer:
     ID = ''
     name = ''
-    
+
     _advanced = False
     needsHashedFilename = False
-    
+
     types = ('wav',)
-    
+
     def setSpeed(self,speed): pass
     def setPitch(self,pitch): pass
     def setVolume(self,volume): pass
@@ -61,21 +61,21 @@ class AudioPlayer:
     def isPlaying(self): return False
     def stop(self): pass
     def close(self): pass
-    
+
     @staticmethod
     def available(ext=None): return False
-    
+
 class PlaySFXAudioPlayer(AudioPlayer):
     ID = 'PlaySFX'
     name = 'XBMC PlaySFX'
     def __init__(self):
-        self._isPlaying = False 
+        self._isPlaying = False
         self.event = threading.Event()
         self.event.clear()
 
     def doPlaySFX(self,path):
         xbmc.playSFX(path,False)
-        
+
     def play(self,path):
         if not os.path.exists(path):
             util.LOG('playSFXHandler.play() - Missing wav file')
@@ -93,42 +93,42 @@ class PlaySFXAudioPlayer(AudioPlayer):
 
     def isPlaying(self):
         return self._isPlaying
-        
+
     def stop(self):
         self.event.set()
         xbmc.stopSFX()
-        
+
     def close(self):
         self.stop()
-        
+
     @staticmethod
     def available(ext=None):
-         return xbmc and hasattr(xbmc,'stopSFX') and PLAYSFX_HAS_USECACHED
+        return xbmc and hasattr(xbmc,'stopSFX') and PLAYSFX_HAS_USECACHED
 
 class PlaySFXAudioPlayer_Legacy(PlaySFXAudioPlayer):
     ID = 'PlaySFX_Legacy'
     name = 'XBMC PlaySFX (Legacy)'
     needsHashedFilename = True
-    
+
     def doPlaySFX(self,path):
         xbmc.playSFX(path)
-        
+
     def play(self,path):
         PlaySFXAudioPlayer.play(self,path)
         if os.path.exists(path): os.remove(path)
-    
+
     def stop(self):
         self.event.set()
-        
+
     @staticmethod
     def available(ext=None):
-         return xbmc and (not hasattr(xbmc,'stopSFX') or not PLAYSFX_HAS_USECACHED)
+        return xbmc and hasattr(xbmc,'playSFX') and (not hasattr(xbmc,'stopSFX') or not PLAYSFX_HAS_USECACHED)
 
 class WindowsAudioPlayer(AudioPlayer):
     ID = 'Windows'
     name = 'Windows Internal'
     types = ('wav','mp3')
-    
+
     def __init__(self,*args,**kwargs):
         import winplay
         self._player = winplay
@@ -147,16 +147,16 @@ class WindowsAudioPlayer(AudioPlayer):
         if self.event.isSet(): self.audio.stop()
         while self.audio.isplaying(): util.sleep(10)
         self.audio = None
-        
+
     def isPlaying(self):
         return not self.event.isSet()
-    
+
     def stop(self):
         self.event.set()
 
     def close(self):
         self.stop()
-    
+
     @staticmethod
     def available(ext=None):
         if not sys.platform.startswith('win'): return False
@@ -166,7 +166,7 @@ class WindowsAudioPlayer(AudioPlayer):
         except:
             util.ERROR('winplay import failed',hide_tb=True)
         return False
-        
+
 class SubprocessAudioPlayer(AudioPlayer):
     _availableArgs = None
     _playArgs = None
@@ -175,28 +175,28 @@ class SubprocessAudioPlayer(AudioPlayer):
     _volumeArgs = None
     _pipeArgs = None
     kill = False
-            
+
     def __init__(self):
         self._wavProcess = None
         self.speed = 0
         self.volume = None
         self.active = True
-    
+
     def speedArg(self,speed):
         return str(speed * self._speedMultiplier)
-        
+
     def baseArgs(self,path):
         args = []
         args.extend(self._playArgs)
         args[args.index(None)] = path
         return args
-        
+
     def playArgs(self,path):
         return self.baseArgs(path)
-        
+
     def canPipe(self):
         return bool(self._pipeArgs)
-        
+
     def pipe(self,source):
         self._wavProcess = subprocess.Popen(self._pipeArgs,stdin=subprocess.PIPE,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
         try:
@@ -209,19 +209,19 @@ class SubprocessAudioPlayer(AudioPlayer):
         source.close()
         self._wavProcess.stdin.close()
         while self._wavProcess.poll() == None and self.active: util.sleep(10)
-        
+
     def setSpeed(self,speed):
         self.speed = speed
-        
+
     def setVolume(self,volume):
         self.volume = volume
-        
+
     def play(self,path):
         args = self.playArgs(path)
         self._wavProcess = subprocess.Popen(args,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-        
+
         while self._wavProcess.poll() == None and self.active: util.sleep(10)
-        
+
     def isPlaying(self):
         return self._wavProcess and self._wavProcess.poll() == None
 
@@ -234,7 +234,7 @@ class SubprocessAudioPlayer(AudioPlayer):
                 self._wavProcess.terminate()
         except:
             pass
-        
+
     def close(self):
         self.active = False
         if not self._wavProcess or self._wavProcess.poll(): return
@@ -286,10 +286,10 @@ class AfplayPlayer(SubprocessAudioPlayer): #OSX
 
     def setVolume(self,volume):
         self.volume = min(int(100 * (10**(volume/20.0))),100) #Convert dB to percent
-        
+
     def setSpeed(self,speed):
         self.speed = speed * 0.01
-        
+
     def playArgs(self,path):
         args = self.baseArgs(path)
         if self.volume:
@@ -299,7 +299,7 @@ class AfplayPlayer(SubprocessAudioPlayer): #OSX
             args.extend(self._speedArgs)
             args[args.index(None)] = str(self.speed)
         return args
-        
+
 class SOXAudioPlayer(SubprocessAudioPlayer):
     ID = 'sox'
     name = 'SOX'
@@ -321,7 +321,7 @@ class SOXAudioPlayer(SubprocessAudioPlayer):
             args.extend(self._speedArgs)
             args[args.index(None)] = self.speedArg(self.speed)
         return args
-    
+
     @classmethod
     def available(cls,ext=None):
         try:
@@ -343,7 +343,7 @@ class MPlayerAudioPlayer(SubprocessAudioPlayer):
     _speedMultiplier = 0.01
     _volumeArgs = 'volume={0}'
     types = ('wav','mp3')
-    
+
     def playArgs(self,path):
         args = self.baseArgs(path)
         if self.speed or self.volume:
@@ -355,7 +355,7 @@ class MPlayerAudioPlayer(SubprocessAudioPlayer):
                 filters.append(self._volumeArgs.format(self.volume))
             args.append(','.join(filters))
         return args
-        
+
 class Mpg123AudioPlayer(SubprocessAudioPlayer):
     ID = 'mpg123'
     name = 'mpg123'
@@ -371,7 +371,7 @@ class Mpg321AudioPlayer(SubprocessAudioPlayer):
     _playArgs = ('mpg321','-q',None)
     _pipeArgs = ('mpg321','-q','-')
     types = ('mp3',)
-    
+
 class BasePlayerHandler:
     def setSpeed(self,speed): pass
     def setVolume(self,speed): pass
@@ -392,7 +392,7 @@ class BasePlayerHandler:
         else:
             self.outDir = os.path.join(util.profileDirectory(),'xbmc_speech')
         if not os.path.exists(self.outDir): os.makedirs(self.outDir)
-        
+
 class WavAudioPlayerHandler(BasePlayerHandler):
     players = (PlaySFXAudioPlayer,PlaySFXAudioPlayer_Legacy,WindowsAudioPlayer,AfplayPlayer,SOXAudioPlayer,PaplayAudioPlayer,AplayAudioPlayer,MPlayerAudioPlayer)
     def __init__(self,preferred=None,advanced=False):
@@ -416,10 +416,10 @@ class WavAudioPlayerHandler(BasePlayerHandler):
 
     def canPipe(self):
         return self._player.canPipe()
-        
+
     def pipeAudio(self,source):
         return self._player.pipe(source)
-        
+
     def playerAvailable(self):
         return bool(self.availablePlayers)
 
@@ -460,7 +460,7 @@ class WavAudioPlayerHandler(BasePlayerHandler):
         if self._player.needsHashedFilename:
             self.outFile = self.outFileBase % hashlib.md5(text).hexdigest()
         return self.outFile
-        
+
     def setSpeed(self,speed):
         return self._player.setSpeed(speed)
 
@@ -486,14 +486,14 @@ class WavAudioPlayerHandler(BasePlayerHandler):
                 except:
                     util.ERROR('Error Removing File',hide_tb=True)
         return self._player.close()
-        
+
     @classmethod
     def getAvailablePlayers(cls):
         players = []
         for p in cls.players:
             if p.available(): players.append(p)
         return players
-        
+
     @classmethod
     def canPlay(cls):
         for p in cls.players:
@@ -505,7 +505,7 @@ class MP3AudioPlayerHandler(WavAudioPlayerHandler):
     def __init__(self,*args,**kwargs):
         WavAudioPlayerHandler.__init__(self,*args,**kwargs)
         self.outFile = os.path.join(self.outDir,'speech.mp3')
-    
+
     @classmethod
     def canPlay(cls):
         for p in cls.players:
