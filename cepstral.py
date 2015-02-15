@@ -15,6 +15,36 @@ def getStartupInfo():
 
     return None
 
+class CepstralTTSOEBackend(base.SimpleTTSBackendBase):
+    provider = 'Cepstra_OE'
+    displayName = 'Cepstral OpenElec'
+    canStreamWav = True
+
+    def init(self):
+        self.process = None
+        self.setMode(base.SimpleTTSBackendBase.WAVOUT)
+
+    def runCommand(self,text,outFile):
+        args = ['/lib/ld-linux.so.3', '--library-path',  '/storage/music/callie/lib', '/storage/music/callie/bin/swift.bin', '-d', '/storage/music/callie/voices/Callie', '-o', outFile, text]
+        subprocess.call(args)
+        return True
+
+    def runCommandAndPipe(self,text):
+        args = ['/lib/ld-linux.so.3', '--library-path',  '/storage/music/callie/lib', '/storage/music/callie/bin/swift.bin', '-d', '/storage/music/callie/voices/Callie', '-o', '-', text]
+        self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
+        return self.process.stdout
+
+    def stop(self):
+        if not self.process: return
+        try:
+            self.process.terminate()
+        except:
+            pass
+
+    @staticmethod
+    def available():
+        return True
+
 class CepstralTTSBackend(base.SimpleTTSBackendBase):
     provider = 'Cepstral'
     displayName = 'Cepstral'
