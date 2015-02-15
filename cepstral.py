@@ -22,7 +22,9 @@ class CepstralTTSOEBackend(base.SimpleTTSBackendBase):
 
     def init(self):
         self.process = None
-        self.setMode(base.SimpleTTSBackendBase.WAVOUT)
+        self.aplayProcess = None
+        self.setMode(base.SimpleTTSBackendBase.ENGINESPEAK)
+        self.restartProcess()
 
     def runCommand(self,text,outFile):
         args = ['/lib/ld-linux.so.3', '--library-path',  '/storage/music/callie/lib', '/storage/music/callie/bin/swift.bin', '-d', '/storage/music/callie/voices/Callie', '-o', outFile, text]
@@ -34,12 +36,39 @@ class CepstralTTSOEBackend(base.SimpleTTSBackendBase):
         self.process = subprocess.Popen(args,stdout=subprocess.PIPE)
         return self.process.stdout
 
+    def runCommandAndSpeak(self,text):
+        self.process.stdin.write(text + '\n\n')
+
+    def restartProcess(self):
+        self.stopProcess()
+        args = ['/lib/ld-linux.so.3', '--library-path',  '/storage/music/callie/lib', '/storage/music/callie/bin/swift.bin', '-d', '/storage/music/callie/voices/Callie', '-f','-','-o', '-']
+        self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdin=subprocess.PIPE, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+        self.aplayProcess = subprocess.Popen(['aplay -q'], startupinfo=self.startupinfo, stdin=self.process.stdout, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+
+    def stopProcess(self):
+        if self.process:
+            try:
+                self.process.terminate()
+            except:
+                pass
+        if self.aplayProcess:
+            try:
+                self.aplayProcess.terminate()
+            except:
+                pass
+
+#    def stop(self):
+#        if not self.process: return
+#        try:
+#            self.process.terminate()
+#        except:
+#            pass
+
     def stop(self):
-        if not self.process: return
-        try:
-            self.process.terminate()
-        except:
-            pass
+        self.restartProcess()
+
+    def close(self):
+        self.stopProcess()
 
     @staticmethod
     def available():
