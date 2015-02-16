@@ -381,6 +381,7 @@ class Mpg321OEPiAudioPlayer(SubprocessAudioPlayer):
     def __init__(self):
         self._wavProcess = None
         import OEPiExtras
+        OEPiExtras.init()
         self.env = OEPiExtras.getEnvironment()
         self.active = True
 
