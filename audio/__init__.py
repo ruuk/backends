@@ -400,7 +400,7 @@ class Mpg321OEPiAudioPlayer(SubprocessAudioPlayer):
         while self._wavProcess.poll() == None and self.active: util.sleep(10)
 
     def play(self,path):
-        self._wavProcess = subprocess.Popen('mpg321 --wav - "{0}" | aplay'.format(path),stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+        self._wavProcess = subprocess.Popen('mpg321 --wav - "{0}" | aplay'.format(path),stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT,env=self.env,shell=True)
 
     @classmethod
     def available(cls,ext=None):
