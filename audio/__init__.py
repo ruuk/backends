@@ -372,6 +372,44 @@ class Mpg321AudioPlayer(SubprocessAudioPlayer):
     _pipeArgs = ('mpg321','-q','-')
     types = ('mp3',)
 
+class Mpg321OEPiAudioPlayer(SubprocessAudioPlayer):
+    ID = 'mpg321_OE_Pi'
+    name = 'mpg321 OE Pi'
+
+    types = ('mp3',)
+
+    def __init__(self):
+        self._wavProcess = None
+        import OEPiExtras
+        self.env = OEPiExtras.getEnvironment()
+        self.active = True
+
+    def canPipe(self): return True
+
+    def pipe(self,source):
+        self._wavProcess = subprocess.Popen('mpg321 - --wav - | aplay',stdin=subprocess.PIPE,stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT,env=self.env,shell=True)
+        try:
+            shutil.copyfileobj(source,self._wavProcess.stdin)
+        except IOError,e:
+            if e.errno != errno.EPIPE:
+                util.ERROR('Error piping audio',hide_tb=True)
+        except:
+            util.ERROR('Error piping audio',hide_tb=True)
+        source.close()
+        self._wavProcess.stdin.close()
+        while self._wavProcess.poll() == None and self.active: util.sleep(10)
+
+    def play(self,path):
+        self._wavProcess = subprocess.Popen('mpg321 --wav - "{0}" | aplay'.format(path),stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+
+    @classmethod
+    def available(cls,ext=None):
+        try:
+            import OEPiExtras #analysis:ignore
+        except:
+            return False
+        return True
+
 class BasePlayerHandler:
     def setSpeed(self,speed): pass
     def setVolume(self,speed): pass
@@ -501,7 +539,7 @@ class WavAudioPlayerHandler(BasePlayerHandler):
         return False
 
 class MP3AudioPlayerHandler(WavAudioPlayerHandler):
-    players = (WindowsAudioPlayer,AfplayPlayer,SOXAudioPlayer,Mpg123AudioPlayer,Mpg321AudioPlayer,MPlayerAudioPlayer)
+    players = (WindowsAudioPlayer,AfplayPlayer,SOXAudioPlayer,Mpg123AudioPlayer,Mpg321AudioPlayer,MPlayerAudioPlayer,Mpg321OEPiAudioPlayer)
     def __init__(self,*args,**kwargs):
         WavAudioPlayerHandler.__init__(self,*args,**kwargs)
         self.outFile = os.path.join(self.outDir,'speech.mp3')

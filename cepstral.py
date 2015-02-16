@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, subprocess
+import os, subprocess, shutil, errno
 import base
 from lib import util
 
@@ -16,7 +16,7 @@ def getStartupInfo():
     return None
 
 class CepstralTTSOEBackend(base.SimpleTTSBackendBase):
-    provider = 'Cepstra_OE'
+    provider = 'Cepstral_OE'
     displayName = 'Cepstral OpenElec'
     canStreamWav = True
 
@@ -42,8 +42,8 @@ class CepstralTTSOEBackend(base.SimpleTTSBackendBase):
     def restartProcess(self):
         self.stopProcess()
         args = ['/lib/ld-linux.so.3', '--library-path',  '/storage/music/callie/lib', '/storage/music/callie/bin/swift.bin', '-d', '/storage/music/callie/voices/Callie', '-f','-','-o', '-']
-        self.process = subprocess.Popen(args, startupinfo=self.startupinfo, stdin=subprocess.PIPE, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
-        self.aplayProcess = subprocess.Popen(['aplay -q'], startupinfo=self.startupinfo, stdin=self.process.stdout, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
+        self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=(open(os.path.devnull, 'w')))
+        self.aplayProcess = subprocess.Popen(['aplay','-q'], stdin=self.proces.stdout, stdout=(open(os.path.devnull, 'w')), stderr=subprocess.STDOUT)
 
     def stopProcess(self):
         if self.process:
