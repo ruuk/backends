@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, subprocess, shutil, errno
+import os, subprocess
 import base
 from lib import util
 

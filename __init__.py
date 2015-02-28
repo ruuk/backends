@@ -15,7 +15,7 @@ from espeak import ESpeakTTSBackend, ESpeakCtypesTTSBackend
 from speechdispatcher import SpeechDispatcherTTSBackend
 from jaws import JAWSTTSBackend
 from speech_server import SpeechServerBackend
-from cepstral import CepstralTTSBackend, CepstralTTSOEBackend
+from cepstral import CepstralTTSBackend #, CepstralTTSOEBackend
 from google import GoogleTTSBackend
 from speechutil import SpeechUtilComTTSBackend
 from recite import ReciteTTSBackend
@@ -29,7 +29,7 @@ backendsByPriority = [  JAWSTTSBackend,
                         Pico2WaveTTSBackend,
                         FestivalTTSBackend,
                         CepstralTTSBackend,
-                        CepstralTTSOEBackend,
+#                        CepstralTTSOEBackend,
                         SpeechDispatcherTTSBackend,
                         OSXSayTTSBackend,
 #                        VoiceOverBackend,

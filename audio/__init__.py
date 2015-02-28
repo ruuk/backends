@@ -540,7 +540,7 @@ class WavAudioPlayerHandler(BasePlayerHandler):
         return False
 
 class MP3AudioPlayerHandler(WavAudioPlayerHandler):
-    players = (WindowsAudioPlayer,AfplayPlayer,SOXAudioPlayer,Mpg123AudioPlayer,Mpg321AudioPlayer,MPlayerAudioPlayer,Mpg321OEPiAudioPlayer)
+    players = (WindowsAudioPlayer,AfplayPlayer,SOXAudioPlayer,Mpg123AudioPlayer,Mpg321AudioPlayer,MPlayerAudioPlayer)
     def __init__(self,*args,**kwargs):
         WavAudioPlayerHandler.__init__(self,*args,**kwargs)
         self.outFile = os.path.join(self.outDir,'speech.mp3')
