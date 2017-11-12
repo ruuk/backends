@@ -56,6 +56,9 @@ def getAvailableBackends(can_stream_wav=False):
         available.append(b)
     return available
 
+def getLogOnlyBackend():
+    return LogOnlyTTSBackend
+
 def getBackendFallback():
     if util.isATV2():
         return FliteTTSBackend

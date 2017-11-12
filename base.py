@@ -400,7 +400,7 @@ class LogOnlyTTSBackend(TTSBackendBase):
     provider = 'log'
     displayName = 'Log'
     def say(self,text,interrupt=False):
-        util.LOG('say(Interrupt={1}): {0}'.format(repr(text),interrupt))
+        util.DEBUG_LOG('say(Interrupt={1}): {0}'.format(repr(text),interrupt))
 
     @staticmethod
     def available():
