@@ -158,7 +158,7 @@ class ESpeakCtypesTTSBackend(base.TTSBackendBase):
         try:
             return bool(ctypes.util.find_library('espeak'))
         except IOError:
-            return false
+            return False
 
     @classmethod
     def settingList(cls,setting,*args):
