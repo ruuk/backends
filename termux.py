@@ -10,20 +10,17 @@ class TermuxTTSBackend(base.SimpleTTSBackendBase):
     displayName = 'Termux'
 
     def init(self):
-        self.process = None
+        pass
 
     def runCommandAndSpeak(self, text):
         args = ['termux-tts-speak', text]
 
-        self.process = subprocess.Popen(args)
-        while self.process.poll() == None and self.active: util.sleep(10)
+        process = subprocess.Popen(args)
+        while process.poll() == None and self.active:
+            util.sleep(10)
 
     def stop(self):
-        if not self.process: return
-        try:
-            self.process.terminate()
-        except:
-            pass
+        pass
 
     @staticmethod
     def available():
