@@ -17,7 +17,7 @@ class TermuxTTSBackend(base.SimpleTTSBackendBase):
         if self.process is None:
             self.process = subprocess.Popen(['termux-tts-speak'], stdin=subprocess.PIPE)
 
-        self.process.stdin.write(text)
+        self.process.stdin.write(text + '\n')
 
     def stop(self):
         if not self.process: return
@@ -25,6 +25,7 @@ class TermuxTTSBackend(base.SimpleTTSBackendBase):
             self.process.terminate()
         except:
             pass
+
 
         self.process = None
 
