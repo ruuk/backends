@@ -25,6 +25,7 @@ from termux import TermuxTTSBackend
 
 backendsByPriority = [  SAPITTSBackend,
                         OSXSayTTSBackend,
+                        TermuxTTSBackend,
                         ESpeakTTSBackend,
                         JAWSTTSBackend,
                         NVDATTSBackend,
@@ -39,7 +40,6 @@ backendsByPriority = [  SAPITTSBackend,
                         ReciteTTSBackend,
 #                        GoogleTTSBackend,
 #                        SpeechUtilComTTSBackend,
-                        TermuxTTSBackend,
                         ESpeakCtypesTTSBackend,
                         LogOnlyTTSBackend
 ]

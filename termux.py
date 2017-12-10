@@ -2,7 +2,6 @@
 import base
 import subprocess
 import os
-from lib import util
 
 
 class TermuxTTSBackend(base.SimpleTTSBackendBase):
@@ -18,7 +17,7 @@ class TermuxTTSBackend(base.SimpleTTSBackendBase):
         if self.process is None:
             self.process = subprocess.Popen(['termux-tts-speak'], stdin=subprocess.PIPE)
 
-        self.process.communicate(text)
+        self.process.stdin.write(text)
 
     def stop(self):
         if not self.process: return
